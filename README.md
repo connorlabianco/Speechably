@@ -23,8 +23,8 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 ---
 
 ## 🗂️ Project Structure
-
-speech-feedback-ai/
+```bash
+speechably/
 ├── app/                     # Frontend logic (Streamlit)
 │   ├── main.py              # Entry point for your web app
 │   └── components/          # Reusable UI components if needed
@@ -52,7 +52,7 @@ speech-feedback-ai/
 ├── requirements.txt         # Python deps
 ├── .env                     # API keys (Gemini)
 └── README.md                # Project overview
-
+```
 
 
 ---
