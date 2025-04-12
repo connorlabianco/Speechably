@@ -76,17 +76,17 @@ speechably/
    git clone https://github.com/your-username/speechably.git
    cd speechably
 
-## Dependencies
+2. **Install Dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Create a .env file in the root directory and add your API key
+3. **Create a .env file in the root directory and add your API key**
 ```bash
 GEMINI_API_KEY=your_key_here
 ```
 
-## How to run
+4. **Run the program**
 ```bash
 cd app
 streamlit run main.py
