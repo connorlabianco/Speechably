@@ -60,12 +60,12 @@ speechably/
 ## ⚙️ Tech Stack
 
 - **Python**
-- **Streamlit / Flask** – Frontend
-- **MoviePy / FFmpeg** – Video + audio extraction
-- **Pre-trained Speech Emotion Models** – Kaggle / Hugging Face
-- **MediaPipe / OpenPose** – Pose & gesture analysis
-- **LLM Integration** – Gemini API / OpenAI / Hugging Face
-- **Matplotlib / Plotly** – Optional feedback visualization
+- **Streamlit** – Frontend
+- **MoviePy** – Video + audio extraction
+- **Kaggle / Hugging Face** – Pre-trained Speech Emotion Models
+- **MediaPipe** – Pose & gesture analysis
+- **Hugging Face** – LLM Integration
+- **Plotly** – Optional feedback visualization
 
 ---
 
