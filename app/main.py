@@ -1,47 +1,69 @@
-import torch
-import torchaudio
-from transformers import Wav2Vec2FeatureExtractor, AutoModelForAudioClassification
+import streamlit as st
+import tempfile
 from pathlib import Path
+import sys
+import os
 
-# Load model + feature extractor (not processor)
-model_name = "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition"
-feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
-model = AutoModelForAudioClassification.from_pretrained(model_name)
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
 
-# 🎧 Analyze a single audio file
-def analyze_speech_local(audio_file_path):
-    waveform, sample_rate = torchaudio.load(audio_file_path)
-    waveform = waveform.squeeze()
+from backend.speech_analysis import SpeechAnalyzer
+from backend.segment_and_extract import split_and_extract_audio
 
-    # Convert to model inputs
-    inputs = feature_extractor(waveform, sampling_rate=sample_rate, return_tensors="pt")
+# Set page config
+st.set_page_config(
+    page_title="Speechably - Speech Emotion Analysis",
+    page_icon="🎤",
+    layout="wide"
+)
 
-    # Get logits
-    with torch.no_grad():
-        outputs = model(**inputs)
-        logits = outputs.logits
-        predicted_class_id = torch.argmax(logits, dim=-1).item()
+# Initialize the speech analyzer
+analyzer = SpeechAnalyzer()
 
-    # Convert ID to label
-    emotion_label = model.config.id2label[predicted_class_id]
-    return emotion_label
+def main():
+    st.title("🎤 Speechably - Speech Emotion Analysis")
+    st.write("Upload an MP4 video to analyze speech emotions in different segments")
 
+    # File uploader
+    uploaded_file = st.file_uploader("Choose an MP4 file", type=["mp4"])
+    
+    if uploaded_file is not None:
+        # Create a temporary directory for processing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Save the uploaded file temporarily
+            temp_video_path = os.path.join(temp_dir, "uploaded_video.mp4")
+            with open(temp_video_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # Create output directory for segments
+            output_dir = os.path.join(temp_dir, "output_segments")
+            
+            # Show processing status
+            with st.spinner("Processing video and extracting audio segments..."):
+                # Split video and extract audio
+                split_and_extract_audio(temp_video_path, output_dir)
+                
+                # Analyze the segments
+                results = analyzer.analyze_segments(output_dir)
+                
+                # Display results
+                st.success("Analysis complete!")
+                
+                # Create two columns for results
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("📊 Emotion Analysis Results")
+                    for filename, emotion in results.items():
+                        st.write(f"**{filename}**: {emotion}")
+                
+                with col2:
+                    st.subheader("🎥 Video Segments")
+                    # Display video segments
+                    for i in range(1, len(results) + 1):
+                        video_path = os.path.join(output_dir, f"segment_{i}.mp4")
+                        st.video(video_path)
 
-# 📁 Path to your .wav files
-output_folder = Path(r"C:\Users\MCCLAB1200WL744\Desktop\speechably\Speechably\backend\output_segments")
-
-if not output_folder.exists():
-    print(f"❌ Folder does not exist: {output_folder}")
-    exit()
-
-# 📄 Collect audio files
-audio_files = [f for f in output_folder.glob("*.wav") if f.is_file()]
-
-if not audio_files:
-    print("⚠️ No audio files found in the output_segments folder.")
-else:
-    print(f"🔍 Found {len(audio_files)} audio segment(s).")
-    for audio_file in sorted(audio_files):
-        print(f"\n🎧 Analyzing segment: {audio_file.name}")
-        feedback = analyze_speech_local(audio_file)
-        print(f"🧠 Feedback for {audio_file.name}: {feedback}")
+if __name__ == "__main__":
+    main()
