@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import os
 import base64
+from moviepy.editor import VideoFileClip
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent
@@ -68,6 +69,12 @@ st.markdown(f"""
 analyzer = SpeechAnalyzer()
 segmenter = VideoSegmenter()  # Using default configuration
 
+def format_timestamp(seconds):
+    """Convert seconds to MM:SS format"""
+    minutes = int(seconds // 60)
+    seconds = int(seconds % 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
 def main():
     st.title("🪐 Speechably - Speech Emotion Analysis")
     st.write("Upload an MP4 video to analyze speech emotions across different segments. Boost your delivery and launch your confidence.")
@@ -102,8 +109,18 @@ def main():
                 
                 with col1:
                     st.subheader("🚀 Emotion Analysis")
-                    for filename, emotion in results.items():
-                        st.write(f"**{filename}**: {emotion}")
+                    # Calculate and display timestamps for each segment
+                    total_duration = 0
+                    for i, (filename, emotion) in enumerate(results.items()):
+                        # Get the segment duration from the video file
+                        segment_path = os.path.join(output_dir, f"segment_{i+1}.mp4")
+                        with VideoFileClip(segment_path) as clip:
+                            segment_duration = clip.duration
+                        
+                        start_time = format_timestamp(total_duration)
+                        end_time = format_timestamp(total_duration + segment_duration)
+                        st.write(f"**{start_time} - {end_time}**: {emotion}")
+                        total_duration += segment_duration
                 
                 with col2:
                     st.subheader("🛰️ Segment Playback")
