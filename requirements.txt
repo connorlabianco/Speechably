@@ -1,0 +1,9 @@
+streamlit
+moviepy
+huggingface_hub
+transformers
+mediapipe
+plotly
+scipy
+numpy
+pillow
