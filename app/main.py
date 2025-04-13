@@ -401,14 +401,14 @@ def display_gemini_chat(model, emotion_segments):
                     st.session_state.chat_history.append({"role": "ai", "content": ai_response})
                     
                     # Force a rerun to update the chat display
-                    st.experimental_rerun()
+                    st.rerun()
                 except Exception as e:
                     thinking_placeholder.empty()
                     st.session_state.chat_history.append({"role": "ai", "content": f"I'm having trouble generating a response right now. Error: {str(e)}"})
-                    st.experimental_rerun()
+                    st.rerun()
             else:
                 st.session_state.chat_history.append({"role": "ai", "content": "I'm not available right now. Please check the Gemini API configuration."})
-                st.experimental_rerun()
+                st.rerun()
 
 def display_emotion_insights(emotion_data):
     """Display visualizations and insights about emotion patterns"""
@@ -603,7 +603,7 @@ def main():
                         st.session_state.chat_history = [
                             {"role": "ai", "content": "👋 I'm your AI speech coach. I've analyzed your speech patterns and emotions. What would you like to improve today?"}
                         ]
-                        st.experimental_rerun()
+                        st.rerun()
 
 if __name__ == "__main__":
     main()
