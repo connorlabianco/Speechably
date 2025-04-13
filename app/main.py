@@ -9,7 +9,7 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from backend.speech_analysis import SpeechAnalyzer
-from backend.segment_and_extract import split_and_extract_audio
+from backend.segment_and_extract import VideoSegmenter, VideoSegmenterConfig
 
 # Set page config
 st.set_page_config(
@@ -18,8 +18,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize the speech analyzer
+# Initialize the speech analyzer and video segmenter
 analyzer = SpeechAnalyzer()
+segmenter = VideoSegmenter()  # Using default configuration
 
 def main():
     st.title("🎤 Speechably - Speech Emotion Analysis")
@@ -41,8 +42,8 @@ def main():
             
             # Show processing status
             with st.spinner("Processing video and extracting audio segments..."):
-                # Split video and extract audio
-                split_and_extract_audio(temp_video_path, output_dir)
+                # Split video and extract audio using the VideoSegmenter
+                segments = segmenter.split_and_extract_audio(temp_video_path, output_dir)
                 
                 # Analyze the segments
                 results = analyzer.analyze_segments(output_dir)
@@ -54,15 +55,14 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.subheader("📊 Emotion Analysis Results")
+                    st.subheader("🚀 Emotion Analysis: Launch Your Confidence")
                     for filename, emotion in results.items():
                         st.write(f"**{filename}**: {emotion}")
                 
                 with col2:
-                    st.subheader("🎥 Video Segments")
+                    st.subheader("🛰️ Segment Playback")
                     # Display video segments
-                    for i in range(1, len(results) + 1):
-                        video_path = os.path.join(output_dir, f"segment_{i}.mp4")
+                    for video_path, _ in segments:  # Using the returned segments list
                         st.video(video_path)
 
 if __name__ == "__main__":
