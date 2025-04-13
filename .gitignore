@@ -25,3 +25,8 @@ build/
 
 # Logs
 *.log 
+
+# Output
+output_segments/
+
+your_video.mp4
