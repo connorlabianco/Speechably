@@ -926,7 +926,19 @@ def main():
                 
                 st.markdown("#### 📝 Coaching Tips")
                 for i, tip in enumerate(analysis_result["coaching_tips"], 1):
-                    st.markdown(f"{i}. {tip}")
+                    if isinstance(tip, dict):
+                        # Handle dictionary format tips
+                        area = tip.get("area", "General")
+                        tip_text = tip.get("tip", "")
+                        st.markdown(f"""
+                        <div class="insight-card" style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: #ff6b6b;">{area}</h4>
+                            <p style="margin: 0;">{tip_text}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Handle string format tips
+                        st.markdown(f"{i}. {tip}")
                     
                 # Add option to regenerate analysis
                 if st.button("🔄 Regenerate Analysis"):
