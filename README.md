@@ -77,18 +77,18 @@ speechably/
    cd speechably
 
 2. **Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. **Create a .env file in the root directory and add your API key**
-```bash
-GEMINI_API_KEY=your_key_here
-```
+   ```bash
+   GEMINI_API_KEY=your_key_here
+   ```
 
 4. **Run the program**
-```bash
-cd app
-streamlit run main.py
-```
+   ```bash
+   cd app
+   streamlit run main.py
+   ```
 
