@@ -213,6 +213,13 @@ st.markdown(f"""
 analyzer = SpeechAnalyzer()
 segmenter = AudioSegmenter()  # Using default configuration
 
+# Initialize session state for storing analysis results
+if "emotion_segments" not in st.session_state:
+    st.session_state.emotion_segments = None
+
+if "analysis_complete" not in st.session_state:
+    st.session_state.analysis_complete = False
+
 # Initialize Gemini (uncomment and add your API key when ready)
 def init_gemini():
     # Initialize Gemini API
@@ -492,6 +499,17 @@ def main():
     uploaded_file = st.file_uploader("🚀 Choose an MP4 file to analyze", type=["mp4"])
     
     if uploaded_file is not None:
+        # Reset analysis state if a new file is uploaded
+        if "current_file" not in st.session_state or st.session_state.current_file != uploaded_file.name:
+            st.session_state.current_file = uploaded_file.name
+            st.session_state.analysis_complete = False
+            st.session_state.emotion_segments = None
+            # Reset chat history when uploading a new file
+            if "chat_history" in st.session_state:
+                st.session_state.chat_history = [
+                    {"role": "ai", "content": "👋 I'm your AI speech coach. I've analyzed your speech patterns and emotions. What would you like to improve today?"}
+                ]
+        
         # Create a temporary directory for processing
         with tempfile.TemporaryDirectory() as temp_dir:
             # Save the uploaded file temporarily
@@ -499,111 +517,127 @@ def main():
             with open(temp_video_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
-            # Create output directory for segments
-            output_dir = os.path.join(temp_dir, "output_segments")
-            
-            # Show processing status
-            with st.spinner("🛰️ Processing video and extracting audio segments..."):
-                # Extract full audio and split into segments
-                full_audio_path, segment_paths = segmenter.extract_and_split_audio(temp_video_path, output_dir)
+            # Process the video only if analysis is not complete
+            if not st.session_state.analysis_complete:
+                # Create output directory for segments
+                output_dir = os.path.join(temp_dir, "output_segments")
                 
-                # Get total duration of the full audio
-                total_duration = get_audio_duration(full_audio_path, segmenter.config.ffmpeg_path)
-                
-                # Analyze the segments
-                results = analyzer.analyze_segments(output_dir)
-                
-                # Display results
-                st.success("✅ Analysis complete! Here's your mission readout:")
-                
-                # Create tabs for different analysis views
-                tab1, tab2, tab3 = st.tabs(["📊 Basic Analysis", "🧠 Gemini Insights", "💬 AI Coach"])
-                
-                with tab1:
-                    # Create two columns for results
-                    col1, col2 = st.columns(2)
+                # Show processing status
+                with st.spinner("🛰️ Processing video and extracting audio segments..."):
+                    # Extract full audio and split into segments
+                    full_audio_path, segment_paths = segmenter.extract_and_split_audio(temp_video_path, output_dir)
                     
-                    with col1:
-                        st.subheader("🚀 Emotion Analysis")
-                        # Calculate and display timestamps for each segment
-                        current_time = 0
-                        emotion_segments = []
+                    # Get total duration of the full audio
+                    total_duration = get_audio_duration(full_audio_path, segmenter.config.ffmpeg_path)
+                    
+                    # Analyze the segments
+                    results = analyzer.analyze_segments(output_dir)
+                    
+                    # Calculate and store timestamps for each segment
+                    current_time = 0
+                    emotion_segments = []
+                    
+                    for i, (filename, emotion) in enumerate(results.items()):
+                        # Get the segment duration from the audio file
+                        segment_path = os.path.join(output_dir, f"segment_{i+1}.wav")
+                        segment_duration = get_audio_duration(segment_path, segmenter.config.ffmpeg_path)
                         
-                        for i, (filename, emotion) in enumerate(results.items()):
-                            # Get the segment duration from the audio file
-                            segment_path = os.path.join(output_dir, f"segment_{i+1}.wav")
-                            segment_duration = get_audio_duration(segment_path, segmenter.config.ffmpeg_path)
-                            
-                            start_time = format_timestamp(current_time)
-                            # For the last segment, use the total duration instead of current_time + segment_duration
-                            if i == len(results) - 1:
-                                end_time = format_timestamp(total_duration)
-                            else:
-                                end_time = format_timestamp(current_time + segment_duration)
-                            
-                            time_range = f"{start_time} - {end_time}"
-                            st.write(f"**{time_range}**: {emotion}")
-                            
-                            # Store for later use with Gemini
-                            emotion_segments.append((time_range, emotion))
-                            
-                            current_time += segment_duration
+                        start_time = format_timestamp(current_time)
+                        # For the last segment, use the total duration instead of current_time + segment_duration
+                        if i == len(results) - 1:
+                            end_time = format_timestamp(total_duration)
+                        else:
+                            end_time = format_timestamp(current_time + segment_duration)
+                        
+                        time_range = f"{start_time} - {end_time}"
+                        emotion_segments.append((time_range, emotion))
+                        
+                        current_time += segment_duration
                     
-                    with col2:
-                        st.subheader("🛰️ Video Playback")
-                        # Display the full video
-                        st.video(temp_video_path)
+                    # Store the results in session state
+                    st.session_state.emotion_segments = emotion_segments
+                    st.session_state.analysis_complete = True
                 
-                with tab2:
-                    st.subheader("🧠 AI-Powered Speech Insights")
-                    
-                    # Display emotion analytics
-                    display_emotion_insights(emotion_segments)
-                    
-                    # Display AI analysis from Gemini
-                    st.markdown("### 🔍 Gemini Analysis")
-                    
+                st.success("✅ Analysis complete! Here's your mission readout:")
+            else:
+                st.success("✅ Using cached analysis results!")
+            
+            # Get emotion segments from session state
+            emotion_segments = st.session_state.emotion_segments
+            
+            # Create tabs for different analysis views
+            tab1, tab2, tab3 = st.tabs(["📊 Basic Analysis", "🧠 Gemini Insights", "💬 AI Coach"])
+            
+            with tab1:
+                # Create two columns for results
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("🚀 Emotion Analysis")
+                    # Display the emotion segments
+                    for time_range, emotion in emotion_segments:
+                        st.write(f"**{time_range}**: {emotion}")
+                
+                with col2:
+                    st.subheader("🛰️ Video Playback")
+                    # Display the full video
+                    st.video(temp_video_path)
+            
+            with tab2:
+                st.subheader("🧠 AI-Powered Speech Insights")
+                
+                # Display emotion analytics
+                display_emotion_insights(emotion_segments)
+                
+                # Display AI analysis from Gemini
+                st.markdown("### 🔍 Gemini Analysis")
+                
+                # Check if we already have an analysis result in session state
+                if "gemini_analysis" not in st.session_state:
                     with st.spinner("🌌 Analyzing speech patterns with Gemini..."):
-                        # Simulate processing time
                         analysis_result = analyze_with_gemini(gemini_model, emotion_segments)
-                    
-                    # Display analysis results
-                    st.markdown(f"""
-                    <div class="insight-card">
-                        <h4>Summary</h4>
-                        <p>{analysis_result["summary"]}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("#### 🌟 Strengths")
-                        for strength in analysis_result["strengths"]:
-                            st.markdown(f"- {strength}")
-                    
-                    with col2:
-                        st.markdown("#### 🔧 Areas for Improvement")
-                        for area in analysis_result["improvement_areas"]:
-                            st.markdown(f"- {area}")
-                    
-                    st.markdown("#### 📝 Coaching Tips")
-                    for i, tip in enumerate(analysis_result["coaching_tips"], 1):
-                        st.markdown(f"{i}. {tip}")
+                        # Cache the analysis in session state
+                        st.session_state.gemini_analysis = analysis_result
+                else:
+                    analysis_result = st.session_state.gemini_analysis
                 
-                with tab3:
-                    st.subheader("💬 Ask Your AI Speech Coach")
-                    st.write("Chat with your AI speech coach for personalized advice based on your speech analysis.")
-                    
-                    # Display interactive chat interface
-                    display_gemini_chat(gemini_model, emotion_segments)
-                    
-                    # Add a reset button for the chat
-                    if st.button("Reset Chat"):
-                        st.session_state.chat_history = [
-                            {"role": "ai", "content": "👋 I'm your AI speech coach. I've analyzed your speech patterns and emotions. What would you like to improve today?"}
-                        ]
-                        st.rerun()
+                # Display analysis results
+                st.markdown(f"""
+                <div class="insight-card">
+                    <h4>Summary</h4>
+                    <p>{analysis_result["summary"]}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("#### 🌟 Strengths")
+                    for strength in analysis_result["strengths"]:
+                        st.markdown(f"- {strength}")
+                
+                with col2:
+                    st.markdown("#### 🔧 Areas for Improvement")
+                    for area in analysis_result["improvement_areas"]:
+                        st.markdown(f"- {area}")
+                
+                st.markdown("#### 📝 Coaching Tips")
+                for i, tip in enumerate(analysis_result["coaching_tips"], 1):
+                    st.markdown(f"{i}. {tip}")
+            
+            with tab3:
+                st.subheader("💬 Ask Your AI Speech Coach")
+                st.write("Chat with your AI speech coach for personalized advice based on your speech analysis.")
+                
+                # Display interactive chat interface
+                display_gemini_chat(gemini_model, emotion_segments)
+                
+                # Add a reset button for the chat
+                if st.button("Reset Chat"):
+                    st.session_state.chat_history = [
+                        {"role": "ai", "content": "👋 I'm your AI speech coach. I've analyzed your speech patterns and emotions. What would you like to improve today?"}
+                    ]
+                    st.rerun()
 
 if __name__ == "__main__":
     main()
