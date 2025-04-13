@@ -5,13 +5,15 @@ import sys
 import os
 import base64
 from moviepy.editor import VideoFileClip
+import subprocess
+import re
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from backend.speech_analysis import SpeechAnalyzer
-from backend.segment_and_extract import VideoSegmenter, VideoSegmenterConfig
+from backend.segment_and_extract import AudioSegmenter, AudioSegmenterConfig
 
 # Set page config
 st.set_page_config(
@@ -65,15 +67,32 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# Initialize the speech analyzer and video segmenter
+# Initialize the speech analyzer and audio segmenter
 analyzer = SpeechAnalyzer()
-segmenter = VideoSegmenter()  # Using default configuration
+segmenter = AudioSegmenter()  # Using default configuration
 
 def format_timestamp(seconds):
     """Convert seconds to MM:SS format"""
     minutes = int(seconds // 60)
     seconds = int(seconds % 60)
     return f"{minutes:02d}:{seconds:02d}"
+
+def get_audio_duration(audio_path: str, ffmpeg_path: str) -> float:
+    """Get the duration of an audio file using FFmpeg."""
+    cmd = [
+        ffmpeg_path,
+        '-i', audio_path,
+        '-f', 'null',
+        '-'
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    # Extract duration using regex
+    duration_match = re.search(r'Duration: (\d{2}):(\d{2}):(\d{2})\.\d{2}', result.stderr)
+    if duration_match:
+        hours, minutes, seconds = map(int, duration_match.groups())
+        return hours * 3600 + minutes * 60 + seconds
+    return 0.0
 
 def main():
     st.title("🪐 Speechably - Speech Emotion Analysis")
@@ -95,8 +114,11 @@ def main():
             
             # Show processing status
             with st.spinner("🛰️ Processing video and extracting audio segments..."):
-                # Split video and extract audio using the VideoSegmenter
-                segments = segmenter.split_and_extract_audio(temp_video_path, output_dir)
+                # Extract full audio and split into segments
+                full_audio_path, segment_paths = segmenter.extract_and_split_audio(temp_video_path, output_dir)
+                
+                # Get total duration of the full audio
+                total_duration = get_audio_duration(full_audio_path, segmenter.config.ffmpeg_path)
                 
                 # Analyze the segments
                 results = analyzer.analyze_segments(output_dir)
@@ -110,23 +132,26 @@ def main():
                 with col1:
                     st.subheader("🚀 Emotion Analysis")
                     # Calculate and display timestamps for each segment
-                    total_duration = 0
+                    current_time = 0
                     for i, (filename, emotion) in enumerate(results.items()):
-                        # Get the segment duration from the video file
-                        segment_path = os.path.join(output_dir, f"segment_{i+1}.mp4")
-                        with VideoFileClip(segment_path) as clip:
-                            segment_duration = clip.duration
+                        # Get the segment duration from the audio file
+                        segment_path = os.path.join(output_dir, f"segment_{i+1}.wav")
+                        segment_duration = get_audio_duration(segment_path, segmenter.config.ffmpeg_path)
                         
-                        start_time = format_timestamp(total_duration)
-                        end_time = format_timestamp(total_duration + segment_duration)
+                        start_time = format_timestamp(current_time)
+                        # For the last segment, use the total duration instead of current_time + segment_duration
+                        if i == len(results) - 1:
+                            end_time = format_timestamp(total_duration)
+                        else:
+                            end_time = format_timestamp(current_time + segment_duration)
+                        
                         st.write(f"**{start_time} - {end_time}**: {emotion}")
-                        total_duration += segment_duration
+                        current_time += segment_duration
                 
                 with col2:
-                    st.subheader("🛰️ Segment Playback")
-                    # Display video segments
-                    for video_path, _ in segments:  # Using the returned segments list
-                        st.video(video_path)
+                    st.subheader("🛰️ Video Playback")
+                    # Display the full video
+                    st.video(temp_video_path)
 
 if __name__ == "__main__":
     main()
