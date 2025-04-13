@@ -10,7 +10,12 @@ import re
 import google.generativeai as genai
 import pandas as pd
 import time
+import json
+import numpy as np
+import torch
+import whisper
 from dotenv import load_dotenv
+import plotly.express as px
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,6 +26,10 @@ sys.path.append(str(project_root))
 
 from backend.speech_analysis import SpeechAnalyzer
 from backend.segment_and_extract import AudioSegmenter, AudioSegmenterConfig
+
+# Set FFmpeg path
+FFMPEG_PATH = r"C:\Users\MCCLAB1200WL744\Downloads\ffmpeg-7.1.1-essentials_build (1)\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe"
+os.environ['PATH'] = os.path.dirname(FFMPEG_PATH) + os.pathsep + os.environ['PATH']
 
 # Set page config
 st.set_page_config(
@@ -125,6 +134,15 @@ st.markdown(f"""
         border-left: 4px solid #ff6b6b;
     }}
     
+    /* Transcript card styling */
+    .transcript-card {{
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        border-left: 4px solid #6495ed;
+    }}
+    
     /* Ensure all text in insight cards is white */
     .insight-card h4, .insight-card p, .insight-card li {{
         color: white !important;
@@ -213,6 +231,152 @@ st.markdown(f"""
 analyzer = SpeechAnalyzer()
 segmenter = AudioSegmenter()  # Using default configuration
 
+# Initialize Whisper model
+@st.cache_resource
+def load_whisper_model():
+    try:
+        return whisper.load_model("tiny")
+    except Exception as e:
+        st.error(f"Error loading Whisper model: {str(e)}")
+        return None
+
+whisper_model = load_whisper_model()
+
+# Function to transcribe segments using Whisper
+def transcribe_segments(segment_paths, segment_duration):
+    """
+    Transcribe audio segments using the Whisper model
+    """
+    if not whisper_model:
+        st.error("Whisper model not loaded. Please check the error message above.")
+        return []
+        
+    transcripts = []
+    
+    for i, segment_path in enumerate(segment_paths):
+        if not os.path.exists(segment_path):
+            st.error(f"Segment file not found: {segment_path}")
+            continue
+            
+        try:
+            # Get emotion from analyzer results if available
+            emotion = st.session_state.emotion_segments[i][1] if hasattr(st.session_state, 'emotion_segments') else "unknown"
+            
+            # Calculate segment times
+            start_time = i * segment_duration
+            end_time = (i + 1) * segment_duration
+            
+            # Transcribe with Whisper
+            result = whisper_model.transcribe(segment_path)
+            transcribed_text = result["text"].strip()
+            
+            # Count words and calculate WPS
+            word_count = len(transcribed_text.split())
+            wps = word_count / segment_duration if segment_duration > 0 else 0
+            
+            # Create segment data
+            segment_data = {
+                "index": i,
+                "start": round(start_time, 2),
+                "end": round(end_time, 2),
+                "text": transcribed_text,
+                "wps": round(wps, 2),
+                "emotion": emotion
+            }
+            
+            transcripts.append(segment_data)
+        except Exception as e:
+            st.error(f"Error transcribing segment {i+1}: {str(e)}")
+            continue
+    
+    return transcripts
+
+# Function to format time for display
+def format_time(seconds):
+    """Convert seconds to MM:SS format"""
+    minutes = int(seconds // 60)
+    seconds_remainder = int(seconds % 60)
+    return f"{minutes:02d}:{seconds_remainder:02d}"
+
+# Function to generate Gemini prompt
+def generate_gemini_prompt(transcription_data):
+    """
+    Generate a formatted prompt for Gemini based on speech analysis.
+    """
+    # Create the formatted timeline for reference
+    timeline_blocks = []
+    issues = []
+    
+    for segment in transcription_data:
+        # Format times
+        start_time = format_time(segment["start"])
+        end_time = format_time(segment["end"])
+        
+        # Create formatted block
+        block = (
+            f"{start_time}-{end_time} | "
+            f"WPS: {segment['wps']:.2f} | "
+            f"Emotion: {segment['emotion']} | "
+            f"Text: \"{segment['text']}\""
+        )
+        
+        timeline_blocks.append(block)
+        
+        # Check for issues
+        if segment["wps"] > 3.0:
+            issues.append(f"- Segment at {start_time}-{end_time} is too fast ({segment['wps']:.2f} WPS)")
+        elif segment["wps"] < 1.0:
+            issues.append(f"- Segment at {start_time}-{end_time} is too slow ({segment['wps']:.2f} WPS)")
+    
+    # Calculate WPS statistics for overall feedback
+    wps_values = [segment["wps"] for segment in transcription_data]
+    avg_wps = sum(wps_values) / len(wps_values) if wps_values else 0
+    wps_variation = max(wps_values) - min(wps_values) if wps_values else 0
+    
+    # Count emotion transitions
+    emotion_transitions = 0
+    for i in range(1, len(transcription_data)):
+        if transcription_data[i]["emotion"] != transcription_data[i-1]["emotion"]:
+            emotion_transitions += 1
+    
+    # Build the prompt
+    prompt = f"""
+You are a professional speech coach analyzing speech transcript data. The following is a timeline of speech segments with transcriptions, speaking rate (words per second), and detected emotions:
+
+{chr(10).join(block for block in timeline_blocks)}
+
+Based on this data, provide constructive feedback on:
+
+1. Speaking Rate:
+   - Average speaking rate: {avg_wps:.2f} WPS (optimal is 2.0-3.0 WPS)
+   - Rate variation: {wps_variation:.2f} WPS (higher variation can indicate better engagement)
+   - Specific segments to improve:
+     {chr(10).join(f'     {issue}' for issue in issues) if issues else '     None identified'}
+
+2. Emotional Expression:
+   - Number of emotion transitions: {emotion_transitions}
+   - Evaluate whether the emotions match the content of each segment
+   - Suggest where emotional variety could improve engagement
+
+3. Clarity and Enunciation:
+   - Identify any unclear or nonsensical phrases that suggest poor enunciation
+   - Suggest specific techniques to improve clarity
+
+4. Overall Presentation:
+   - Provide 3-5 specific action items to improve this speech
+   - Suggest a practice exercise tailored to this speaker's needs
+
+Format your response in JSON with the following structure:
+{{
+  "summary": "Your overall analysis and key observations",
+  "improvement_areas": ["Area 1", "Area 2", "Area 3"],
+  "strengths": ["Strength 1", "Strength 2"],
+  "coaching_tips": ["Tip 1", "Tip 2", "Tip 3"]
+}}
+"""
+    
+    return prompt
+
 # Initialize session state for storing analysis results
 if "emotion_segments" not in st.session_state:
     st.session_state.emotion_segments = None
@@ -220,7 +384,10 @@ if "emotion_segments" not in st.session_state:
 if "analysis_complete" not in st.session_state:
     st.session_state.analysis_complete = False
 
-# Initialize Gemini (uncomment and add your API key when ready)
+if "transcription_data" not in st.session_state:
+    st.session_state.transcription_data = None
+
+# Initialize Gemini
 def init_gemini():
     # Initialize Gemini API
     try:
@@ -281,7 +448,7 @@ def get_audio_duration(audio_path: str, ffmpeg_path: str) -> float:
         return hours * 3600 + minutes * 60 + seconds
     return 0.0
 
-def analyze_with_gemini(model, emotion_segments, video_context=None):
+def analyze_with_gemini(model, emotion_segments, transcription_data=None, video_context=None):
     """Use Gemini to analyze speech patterns and provide coaching feedback"""
     if model is None:
         return {
@@ -291,24 +458,33 @@ def analyze_with_gemini(model, emotion_segments, video_context=None):
             "coaching_tips": []
         }
     
-    # Format emotion segments for Gemini
-    emotion_timeline = "\n".join([f"{time_range}: {emotion}" for time_range, emotion in emotion_segments])
-    
-    # Create prompt for Gemini
-    prompt = f"""
-    You are a professional speech coach helping someone improve their communication skills.
-    Analyze the following emotion timeline from a speech:
-    
-    {emotion_timeline}
-    
-    Based on this emotional pattern:
-    1. Provide a brief summary of the speaker's emotional journey
-    2. Identify 3 specific areas for improvement
-    3. Point out 2-3 emotional strengths
-    4. Give 3-5 practical coaching tips to help the speaker improve
-    
-    Format your response as JSON with fields: summary, improvement_areas (array), strengths (array), and coaching_tips (array).
-    """
+    # If we have transcription data, use that to generate a more detailed prompt
+    if transcription_data:
+        prompt = generate_gemini_prompt(transcription_data)
+    else:
+        # Fallback to simpler prompt with just emotion segments
+        emotion_timeline = "\n".join([f"{time_range}: {emotion}" for time_range, emotion in emotion_segments])
+        
+        prompt = f"""
+        You are a professional speech coach helping someone improve their communication skills.
+        Analyze the following emotion timeline from a speech:
+        
+        {emotion_timeline}
+        
+        Based on this emotional pattern:
+        1. Provide a brief summary of the speaker's emotional journey
+        2. Identify 3 specific areas for improvement
+        3. Point out 2-3 emotional strengths
+        4. Give 3-5 practical coaching tips to help the speaker improve
+        
+        Format your response in JSON with the following structure:
+        {{
+          "summary": "Your overall analysis and key observations",
+          "improvement_areas": ["Area 1", "Area 2", "Area 3"],
+          "strengths": ["Strength 1", "Strength 2"],
+          "coaching_tips": ["Tip 1", "Tip 2", "Tip 3"]
+        }}
+        """
     
     try:
         # Get response from Gemini
@@ -316,31 +492,36 @@ def analyze_with_gemini(model, emotion_segments, video_context=None):
         response_text = response.text
         
         # Extract JSON data from response
-        import json
-        import re
-        
-        # Look for JSON pattern in the response
-        json_match = re.search(r'```json\n(.*?)\n```', response_text, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            # Try to find any JSON-like structure
-            json_str = response_text
-            
-        # Clean up the string if needed
-        json_str = json_str.replace('```json', '').replace('```', '').strip()
-        
         try:
-            analysis_data = json.loads(json_str)
+            # First try direct JSON parsing
+            analysis_data = json.loads(response_text)
         except json.JSONDecodeError:
-            # If JSON parsing fails, create a structured response manually
-            analysis_data = {
-                "summary": "Unable to parse Gemini's response as JSON. Here's the raw analysis:",
-                "improvement_areas": ["See summary for details"],
-                "strengths": ["See summary for details"],
-                "coaching_tips": ["See summary for details"]
-            }
-            analysis_data["raw_response"] = response_text
+            # If direct parsing fails, try to extract JSON using regex
+            json_match = re.search(r'```json\n(.*?)\n```', response_text, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                # Try to find any JSON-like structure with curly braces
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                else:
+                    # Fallback to raw text
+                    json_str = response_text
+            
+            # Clean up the string
+            json_str = json_str.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                analysis_data = json.loads(json_str)
+            except json.JSONDecodeError:
+                # If JSON parsing still fails, create a structured response manually
+                analysis_data = {
+                    "summary": response_text,
+                    "improvement_areas": ["Please see summary for details"],
+                    "strengths": ["Please see summary for details"],
+                    "coaching_tips": ["Please see summary for details"]
+                }
             
         return analysis_data
         
@@ -417,10 +598,23 @@ def display_gemini_chat(model, emotion_segments):
                 st.session_state.chat_history.append({"role": "ai", "content": "I'm not available right now. Please check the Gemini API configuration."})
                 st.rerun()
 
-def display_emotion_insights(emotion_data):
+def display_emotion_insights(emotion_data, transcription_data=None):
     """Display visualizations and insights about emotion patterns"""
     # Convert emotion data to DataFrame for analysis
     emotion_df = pd.DataFrame(emotion_data, columns=["Time Range", "Emotion"])
+    
+    # Create a new column with numeric start time for plotting
+    emotion_df["Start Time"] = emotion_df["Time Range"].apply(lambda x: x.split(" - ")[0])
+    emotion_df["End Time"] = emotion_df["Time Range"].apply(lambda x: x.split(" - ")[1])
+    
+    # Convert MM:SS format to seconds for plotting
+    def time_to_seconds(time_str):
+        minutes, seconds = map(int, time_str.split(":"))
+        return minutes * 60 + seconds
+    
+    emotion_df["Start Seconds"] = emotion_df["Start Time"].apply(time_to_seconds)
+    emotion_df["End Seconds"] = emotion_df["End Time"].apply(time_to_seconds)
+    emotion_df["Mid Seconds"] = (emotion_df["Start Seconds"] + emotion_df["End Seconds"]) / 2
     
     # Count occurrences of each emotion
     emotion_counts = emotion_df["Emotion"].value_counts()
@@ -431,8 +625,45 @@ def display_emotion_insights(emotion_data):
     # Create visualizations
     st.subheader("🚀 Emotion Distribution")
     
-    # Display emotion counts as a horizontal bar chart
-    st.bar_chart(emotion_counts)
+    # Create emotion timeline chart
+    # Create a plotly figure for emotion timeline
+    fig = px.line(
+        emotion_df, 
+        x="Mid Seconds", 
+        y="Emotion",
+        markers=True,
+        color_discrete_sequence=["#ff6b6b", "#6495ed", "#ffd700", "#7cfc00", "#9370db"],
+        title="Emotion Timeline Throughout Speech"
+    )
+    
+    # Customize layout
+    fig.update_layout(
+        xaxis_title="Time (seconds)",
+        yaxis_title="Emotion",
+        plot_bgcolor="#343D46",
+        paper_bgcolor="#343D46",
+        font=dict(color="white"),
+        xaxis=dict(gridcolor="rgba(255, 255, 255, 0.1)"),
+        yaxis=dict(gridcolor="rgba(255, 255, 255, 0.1)"),
+        margin=dict(l=10, r=10, t=40, b=10),
+        height=400
+    )
+    
+    # Add range markers for each segment
+    for i, row in emotion_df.iterrows():
+        fig.add_shape(
+            type="rect",
+            x0=row["Start Seconds"],
+            x1=row["End Seconds"],
+            y0=row["Emotion"],
+            y1=row["Emotion"],
+            line=dict(width=0),
+            fillcolor="rgba(255, 255, 255, 0.2)",
+            layer="below"
+        )
+    
+    # Display the plotly chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
     
     # Display emotion diversity metrics
     st.markdown("### 🌟 Emotion Patterns")
@@ -487,6 +718,48 @@ def display_emotion_insights(emotion_data):
             st.write("No emotion transitions detected.")
     else:
         st.write("Not enough data to analyze transitions.")
+        
+    # Display transcription data if available
+    if transcription_data:
+        st.markdown("### 📝 Speech Transcription")
+        
+        for segment in transcription_data:
+            start_time = format_timestamp(segment["start"])
+            end_time = format_timestamp(segment["end"])
+            
+            # Determine speed indicator
+            speed_indicator = ""
+            speed_color = "white"
+            if segment["wps"] > 3.0:
+                speed_indicator = " (too fast)"
+                speed_color = "red"
+            elif segment["wps"] < 1.0:
+                speed_indicator = " (too slow)"
+                speed_color = "orange"
+                
+            # Determine emotion color
+            emotion_color = "#ffffff"  # Default white
+            if segment["emotion"] == "angry":
+                emotion_color = "#ff6b6b"
+            elif segment["emotion"] == "calm":
+                emotion_color = "#6495ed"
+            elif segment["emotion"] == "sad":
+                emotion_color = "#9370db"
+            elif segment["emotion"] == "surprised":
+                emotion_color = "#ffd700"
+            elif segment["emotion"] == "happy":
+                emotion_color = "#7cfc00"
+            
+            st.markdown(f"""
+            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px; margin: 10px 0; border-left: 4px solid {emotion_color};">
+                <h4 style="margin: 0; padding: 0;">{start_time} - {end_time}</h4>
+                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                    <span style="color: white;">Emotion: <strong>{segment['emotion']}</strong></span>
+                    <span style="color: {speed_color};">WPS: <strong>{segment['wps']}</strong>{speed_indicator}</span>
+                </div>
+                <p style="margin: 10px 0 0 0; font-size: 16px;">{segment['text']}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
 def main():
     st.title("🪐 Speechably - Speech Emotion Analysis")
@@ -504,11 +777,15 @@ def main():
             st.session_state.current_file = uploaded_file.name
             st.session_state.analysis_complete = False
             st.session_state.emotion_segments = None
+            st.session_state.transcription_data = None
             # Reset chat history when uploading a new file
             if "chat_history" in st.session_state:
                 st.session_state.chat_history = [
                     {"role": "ai", "content": "👋 I'm your AI speech coach. I've analyzed your speech patterns and emotions. What would you like to improve today?"}
                 ]
+            # Reset Gemini analysis when uploading a new file
+            if "gemini_analysis" in st.session_state:
+                del st.session_state.gemini_analysis
         
         # Create a temporary directory for processing
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -521,6 +798,7 @@ def main():
             if not st.session_state.analysis_complete:
                 # Create output directory for segments
                 output_dir = os.path.join(temp_dir, "output_segments")
+                os.makedirs(output_dir, exist_ok=True)
                 
                 # Show processing status
                 with st.spinner("🛰️ Processing video and extracting audio segments..."):
@@ -530,17 +808,19 @@ def main():
                     # Get total duration of the full audio
                     total_duration = get_audio_duration(full_audio_path, segmenter.config.ffmpeg_path)
                     
-                    # Analyze the segments
+                    # Analyze the segments for emotions
                     results = analyzer.analyze_segments(output_dir)
                     
                     # Calculate and store timestamps for each segment
                     current_time = 0
                     emotion_segments = []
+                    segment_durations = []
                     
                     for i, (filename, emotion) in enumerate(results.items()):
                         # Get the segment duration from the audio file
                         segment_path = os.path.join(output_dir, f"segment_{i+1}.wav")
                         segment_duration = get_audio_duration(segment_path, segmenter.config.ffmpeg_path)
+                        segment_durations.append(segment_duration)
                         
                         start_time = format_timestamp(current_time)
                         # For the last segment, use the total duration instead of current_time + segment_duration
@@ -554,16 +834,37 @@ def main():
                         
                         current_time += segment_duration
                     
-                    # Store the results in session state
+                    # Store emotion segments in session state
                     st.session_state.emotion_segments = emotion_segments
+                    
+                    # Transcribe each segment using Whisper and analyze speech patterns
+                    with st.spinner("📝 Transcribing audio with Whisper..."):
+                        # Get paths to all segment files
+                        segment_files = [os.path.join(output_dir, f"segment_{i+1}.wav") for i in range(len(results))]
+                        
+                        # Calculate average segment duration (for WPS)
+                        average_segment_duration = total_duration / len(segment_files)
+                        
+                        # Transcribe segments
+                        transcription_data = transcribe_segments(segment_files, average_segment_duration)
+                        
+                        # Store transcription data
+                        st.session_state.transcription_data = transcription_data
+                        
+                        # Save transcription data to JSON file for reference
+                        json_path = os.path.join(output_dir, "snippet_transcripts.json")
+                        with open(json_path, "w") as f:
+                            json.dump(transcription_data, f, indent=4)
+                    
                     st.session_state.analysis_complete = True
                 
                 st.success("✅ Analysis complete! Here's your mission readout:")
             else:
                 st.success("✅ Using cached analysis results!")
             
-            # Get emotion segments from session state
+            # Get emotion segments and transcription data from session state
             emotion_segments = st.session_state.emotion_segments
+            transcription_data = st.session_state.transcription_data
             
             # Create tabs for different analysis views
             tab1, tab2, tab3 = st.tabs(["📊 Basic Analysis", "🧠 Gemini Insights", "💬 AI Coach"])
@@ -586,8 +887,8 @@ def main():
             with tab2:
                 st.subheader("🧠 AI-Powered Speech Insights")
                 
-                # Display emotion analytics
-                display_emotion_insights(emotion_segments)
+                # Display emotion analytics with transcription data
+                display_emotion_insights(emotion_segments, transcription_data)
                 
                 # Display AI analysis from Gemini
                 st.markdown("### 🔍 Gemini Analysis")
@@ -595,7 +896,9 @@ def main():
                 # Check if we already have an analysis result in session state
                 if "gemini_analysis" not in st.session_state:
                     with st.spinner("🌌 Analyzing speech patterns with Gemini..."):
-                        analysis_result = analyze_with_gemini(gemini_model, emotion_segments)
+                        # Use transcription data for enhanced analysis if available
+                        analysis_result = analyze_with_gemini(gemini_model, emotion_segments, 
+                                                              transcription_data=transcription_data)
                         # Cache the analysis in session state
                         st.session_state.gemini_analysis = analysis_result
                 else:
@@ -624,6 +927,24 @@ def main():
                 st.markdown("#### 📝 Coaching Tips")
                 for i, tip in enumerate(analysis_result["coaching_tips"], 1):
                     st.markdown(f"{i}. {tip}")
+                    
+                # Add option to regenerate analysis
+                if st.button("🔄 Regenerate Analysis"):
+                    # Clear cached analysis
+                    if "gemini_analysis" in st.session_state:
+                        del st.session_state.gemini_analysis
+                    st.rerun()
+                    
+                # Add a download button for the JSON data
+                if transcription_data:
+                    json_str = json.dumps(transcription_data, indent=4)
+                    
+                    st.download_button(
+                        label="⬇️ Download Transcription Data (JSON)",
+                        data=json_str,
+                        file_name="snippet_transcripts.json",
+                        mime="application/json"
+                    )
             
             with tab3:
                 st.subheader("💬 Ask Your AI Speech Coach")

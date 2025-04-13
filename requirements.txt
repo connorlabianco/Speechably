@@ -6,3 +6,4 @@ soundfile
 torchaudio
 google-generativeai
 dotenv
+openai-whisper
