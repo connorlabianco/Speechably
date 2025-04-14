@@ -1,226 +1,220 @@
 import streamlit as st
-import base64
-import os
 from typing import Optional
 
 class StyleManager:
     """
     Manages styling and UI configuration for the Streamlit application.
+    Uses calming colors and simple layout to reduce anxiety.
     """
     
     def __init__(self, background_image_path: Optional[str] = None):
         """
         Initialize the style manager.
+        Background image parameter kept for backward compatibility but not used.
         
         Args:
-            background_image_path: Optional path to background image (not used anymore)
+            background_image_path: Not used
         """
-        pass  # We don't need to store the background path anymore
+        pass
     
     @staticmethod
     def configure_page():
         """Configure Streamlit page settings"""
         st.set_page_config(
             page_title="Speechably - Speech Emotion Analysis",
-            page_icon=None,
+            page_icon="🎙️",
             layout="wide"
         )
     
     def apply_custom_styling(self):
         """Apply custom CSS styling to the Streamlit app"""
-        # Add custom CSS directly without image processing
         st.markdown(self._get_css_styles(), unsafe_allow_html=True)
     
-    def _get_css_styles(self, img_base64: Optional[str] = None) -> str:
+    def _get_css_styles(self) -> str:
         """
         Generate CSS styles for the application.
-        
-        Args:
-            img_base64: Not used anymore, kept for compatibility
+        Uses a calming color palette with soft blues and greens.
             
         Returns:
             CSS styles as a string
         """
         return """
         <style>
-        /* Main app styling */
+        /* Main app styling with calming colors */
         .stApp {
-            background-color: #778ffc;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-color: #f0f4f8;
         }
 
         .main .block-container {
-            background: rgba(13, 17, 23, 0.85);
-            padding: 42px 77px 126px;
-            border-radius: 15px;
-            margin-top: -2rem;
-            position: relative;
-            z-index: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin: 1rem auto;
         }
 
-        /* Typography */
-        h1, h2, h3, p, label {{
-            color: white !important;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
-        }}
+        /* Typography with softer colors */
+        h1 {
+            color: #3a7ca5 !important;
+            font-weight: 600;
+            border-bottom: 1px solid #e6eef7;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h2, h3 {
+            color: #2c6e8e !important;
+            font-weight: 500;
+        }
+        
+        p, label {
+            color: #2c3e50 !important;
+        }
 
-        /* UI elements */
-        .stButton>button, .stFileUploader>div, .stSpinner>div, .stSuccess {{
-            background-color: rgba(255, 255, 255, 0.95) !important;
+        /* UI elements with softer styling */
+        .stButton>button {
+            background-color: #7ec8e3 !important;
+            color: #05445e !important;
+            border-radius: 6px;
+            border: none;
+            padding: 0.3rem 1rem;
+            font-weight: 500;
+        }
+        
+        .stButton>button:hover {
+            background-color: #6db5d9 !important;
+        }
+
+        .stFileUploader>div {
+            background-color: #fff !important;
+            border: 1px dashed #7ec8e3;
+            border-radius: 6px;
+        }
+
+        .stSpinner>div {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-radius: 6px;
+        }
+        
+        .stSuccess {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border-radius: 6px;
+        }
+        
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 10px;
+            border-bottom: 1px solid #e6eef7;
+            padding-bottom: 5px;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            background-color: #f8fafc;
+            border-radius: 6px 6px 0 0;
+            padding: 8px 16px;
+            color: #5c7080;
+            border: 1px solid #e6eef7;
+            border-bottom: none;
+        }
+        
+        .stTabs [aria-selected="true"] {
+            background-color: #ffffff;
+            color: #3a7ca5 !important;
+            border-bottom: 2px solid #3a7ca5;
+        }
+
+        /* Chat styling */
+        .chat-container {
+            background-color: #f8fafc;
             border-radius: 8px;
-            color: #111 !important;
-        }}
-
-        /* Make spinner text black */
-        .stSpinner>div p {{
-            color: #111 !important;
-        }}
-        
-        /* Styling for the tabs */
-        .stTabs [data-baseweb="tab-list"] {{
-            gap: 24px;
-        }}
-        
-        .stTabs [data-baseweb="tab"] {{
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 8px 8px 0 0;
-            padding: 10px 20px;
-            color: white;
-        }}
-        
-        .stTabs [aria-selected="true"] {{
-            background-color: rgba(255, 255, 255, 0.25);
-            border-bottom: 2px solid #ff6b6b;
-        }}
-        
-        /* Chat container styling */
-        .chat-container {{
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
             padding: 15px;
             margin: 10px 0;
-        }}
+            border: 1px solid #e6eef7;
+        }
         
-        .user-message {{
-            background-color: rgba(100, 149, 237, 0.3);
-            border-radius: 10px;
-            padding: 8px 12px;
-            margin: 5px 0;
+        .user-message {
+            background-color: #e6eef7;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 8px 0;
             align-self: flex-end;
             max-width: 80%;
-        }}
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
         
-        .ai-message {{
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 8px 12px;
-            margin: 5px 0;
+        .ai-message {
+            background-color: #f0f7f4;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 8px 0;
             align-self: flex-start;
             max-width: 80%;
-        }}
+            border-left: 3px solid #7ec8e3;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
         
-        /* Insights card styling */
-        .insight-card {{
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+        /* Card styling */
+        .insight-card {
+            background-color: #f8fafc;
+            border-radius: 8px;
             padding: 15px;
-            margin: 10px 0;
-            border-left: 4px solid #ff6b6b;
-        }}
+            margin: 12px 0;
+            border-left: 3px solid #3a7ca5;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
         
-        /* Transcript card styling */
-        .transcript-card {{
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+        .transcript-card {
+            background-color: #f8fafc;
+            border-radius: 8px;
             padding: 15px;
-            margin: 10px 0;
-            border-left: 4px solid #6495ed;
-        }}
+            margin: 12px 0;
+            border-left: 3px solid #75b9be;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
         
-        /* Ensure all text in insight cards is white */
-        .insight-card h4, .insight-card p, .insight-card li {{
-            color: white !important;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
-        }}
-        
-        /* Progress meter styling */
-        .progress-container {{
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            height: 25px;
+        /* Progress meter */
+        .progress-container {
+            background-color: #e9ecef;
+            border-radius: 6px;
+            height: 20px;
             width: 100%;
             margin: 10px 0;
-            position: relative;
-        }}
+            overflow: hidden;
+        }
         
-        .progress-bar {{
+        .progress-bar {
             height: 100%;
-            border-radius: 10px;
+            border-radius: 6px;
             text-align: center;
-            line-height: 25px;
-            color: white;
-            font-weight: bold;
-        }}
+            line-height: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
         
-        /* Pulse animation for AI thinking */
-        @keyframes pulse {{
-            0% {{ opacity: 0.6; }}
-            50% {{ opacity: 1; }}
-            100% {{ opacity: 0.6; }}
-        }}
+        /* Pulse animation */
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
         
-        .ai-thinking {{
+        .ai-thinking {
             animation: pulse 1.5s infinite;
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
-            padding: 10px;
+            background-color: #f0f7f4;
+            border-radius: 8px;
+            padding: 8px 12px;
             display: inline-block;
-        }}
+            border-left: 3px solid #7ec8e3;
+        }
 
-        /* Ensure all text in Gemini insights is white */
-        .stTabs [data-baseweb="tab-panel"] p, 
-        .stTabs [data-baseweb="tab-panel"] li, 
-        .stTabs [data-baseweb="tab-panel"] span, 
-        .stTabs [data-baseweb="tab-panel"] text, 
-        .stTabs [data-baseweb="tab-panel"] .stMarkdown, 
-        .stTabs [data-baseweb="tab-panel"] .st-emotion-cache-beoj2j, 
-        .stTabs [data-baseweb="tab-panel"] .st-emotion-cache-9aoz2h, 
-        .stTabs [data-baseweb="tab-panel"] .metric-value, 
-        .stTabs [data-baseweb="tab-panel"] .metric-label {{
-            color: white !important;
-            fill: white !important;
-        }}
-
-        /* Set emotion distribution chart background color */
-        .stTabs [data-baseweb="tab-panel"] [data-testid="stChart"] {{
-            background-color: #343D46 !important;
+        /* Chart styling */
+        [data-testid="stChart"] {
+            background-color: #ffffff !important;
             border-radius: 8px;
             padding: 10px;
-        }}
-
-        /* Ensure axis labels and tick marks are white */
-        .stTabs [data-baseweb="tab-panel"] [data-testid="stChart"] g text {{
-            fill: white !important;
-        }}
-
-        /* Make metric container text white */
-        .stTabs [data-baseweb="tab-panel"] .st-emotion-cache-1xarl3l, 
-        .stTabs [data-baseweb="tab-panel"] .st-emotion-cache-1wivap2 {{
-            color: white !important;
-        }}
-
-        /* Make metric delta text white */
-        .stTabs [data-baseweb="tab-panel"] .st-emotion-cache-5hmhkg {{
-            color: white !important;
-        }}
-
-        /* Make chart legends white */
-        .stTabs [data-baseweb="tab-panel"] [data-testid="stChart"] text {{
-            fill: white !important;
-        }}
+            border: 1px solid #e6eef7;
+        }
         </style>
         """
     
@@ -256,8 +250,8 @@ class StyleManager:
         """
         icon_html = f"{icon} " if icon else ""
         st.markdown(
-            f"<h{level} style='color:white; background-color:rgba(255,255,255,0.1); "
-            f"padding:10px; border-radius:5px; border-left:4px solid #ff6b6b;'>"
+            f"<h{level} style='color:#2c6e8e; background-color:#f0f7f4; "
+            f"padding:10px; border-radius:6px; border-left:3px solid #3a7ca5;'>"
             f"{icon_html}{text}</h{level}>", 
             unsafe_allow_html=True
         )
@@ -266,38 +260,53 @@ class StyleManager:
 # Example usage if run directly
 if __name__ == "__main__":
     # This would be used for local testing
-    import sys
-    from pathlib import Path
-    
-    # Set background path for testing
-    bg_path = os.path.join(os.path.dirname(__file__), "..", "background.png")
-    if not os.path.exists(bg_path):
-        print(f"Warning: Background image not found at {bg_path}")
-        # Use a fallback color instead
-        bg_path = None
     
     # Initialize style manager
-    style_manager = StyleManager(bg_path) if bg_path else None
+    style_manager = StyleManager()
     
     # Configure page
     StyleManager.configure_page()
     
-    # Apply custom styling if background is available
-    if style_manager:
-        style_manager.apply_custom_styling()
+    # Apply custom styling
+    style_manager.apply_custom_styling()
     
     # Test UI elements
-    st.title("Style Manager Test")
+    st.title("Speechably Style Test")
     
-    if style_manager:
-        style_manager.add_fancy_header("This is a fancy header", "🚀", 2)
-        style_manager.add_spacer(2)
-        
+    style_manager.add_fancy_header("Speech Analysis Results", "🎙️", 2)
+    style_manager.add_spacer(1)
+    
+    st.write("This is a test of the new calming style for Speechably.")
+    
+    # Test tabs
+    tab1, tab2, tab3 = st.tabs(["📊 Analysis", "🧠 Insights", "💬 Coach"])
+    
+    with tab1:
+        st.write("This is the analysis tab")
+        st.metric("Speaking Rate", "2.4 WPS", "Good")
+    
+    with tab2:
         style_manager.add_custom_element("""
         <div class="insight-card">
-            <h4>Test Insight</h4>
-            <p>This is a test of the custom styling capabilities.</p>
+            <h4>Key Insight</h4>
+            <p>Your speech shows good emotional variation and clear articulation.</p>
         </div>
         """)
-    else:
-        st.write("Background image not found, custom styling not applied.")
+    
+    with tab3:
+        st.write("Chat with your coach:")
+        style_manager.add_custom_element("""
+        <div class="ai-message">
+            How can I help you improve your speech today?
+        </div>
+        """)
+        style_manager.add_custom_element("""
+        <div class="user-message">
+            How can I reduce filler words?
+        </div>
+        """)
+        style_manager.add_custom_element("""
+        <div class="ai-thinking">
+            Thinking...
+        </div>
+        """)
