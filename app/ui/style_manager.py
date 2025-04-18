@@ -3,28 +3,12 @@ from typing import Optional
 
 class StyleManager:
     """
-    Manages styling and UI configuration for the Streamlit application.
-    Uses calming colors and simple layout to reduce anxiety.
+    Modernized style manager for Speechably with a professional, clean aesthetic.
     """
     
-    def __init__(self, background_image_path: Optional[str] = None):
-        """
-        Initialize the style manager.
-        Background image parameter kept for backward compatibility but not used.
-        
-        Args:
-            background_image_path: Not used
-        """
+    def __init__(self):
+        """Initialize the style manager"""
         pass
-    
-    @staticmethod
-    def configure_page():
-        """Configure Streamlit page settings"""
-        st.set_page_config(
-            page_title="Speechably - Speech Emotion Analysis",
-            page_icon="🎙️",
-            layout="wide"
-        )
     
     def apply_custom_styling(self):
         """Apply custom CSS styling to the Streamlit app"""
@@ -32,281 +16,472 @@ class StyleManager:
     
     def _get_css_styles(self) -> str:
         """
-        Generate CSS styles for the application.
-        Uses a calming color palette with soft blues and greens.
+        Generate CSS styles for a clean, professional UI.
+        Uses a light color scheme with clear typography and subtle accents.
             
         Returns:
             CSS styles as a string
         """
         return """
         <style>
-        /* Main app styling with calming colors */
-        .stApp {
-            background-color: #f0f4f8;
+        /* Base styles */
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #343a40;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border-radius: 8px;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .main .block-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin: 1rem auto;
-        }
-
-        /* Typography with softer colors */
-        h1 {
-            color: #3a7ca5 !important;
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+            color: var(--text) !important;
             font-weight: 600;
-            border-bottom: 1px solid #e6eef7;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
         }
         
-        h2, h3 {
-            color: #2c6e8e !important;
+        h1 {
+            font-size: 1.8rem !important;
+            letter-spacing: -0.02em;
+        }
+        
+        h2 {
+            font-size: 1.4rem !important;
+            letter-spacing: -0.01em;
+        }
+        
+        h3 {
+            font-size: 1.2rem !important;
+        }
+        
+        p, li, div, span {
+            color: var(--text);
+            font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+        }
+
+        /* Main layout */
+        .main .block-container {
+            padding: 2rem 1.5rem !important;
+            max-width: 1200px;
+        }
+
+        /* Custom components */
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: 1px solid var(--medium-gray);
+        }
+        
+        .compact-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--medium-gray);
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            height: 100%;
+            border: 1px solid var(--medium-gray);
+        }
+        
+        .metric-card h4 {
+            font-size: 0.875rem !important;
+            color: var(--text-light) !important;
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+        }
+        
+        .metric-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-card .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        /* Feedback elements */
+        .transcript-segment {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            background: white;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--primary);
+            transition: all 0.2s ease;
+        }
+        
+        .transcript-segment:hover {
+            box-shadow: var(--shadow);
+        }
+        
+        .transcript-segment .timestamp {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+        
+        .transcript-segment .metrics {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .transcript-segment .metrics .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: 500;
         }
         
-        p, label {
-            color: #2c3e50 !important;
+        .transcript-segment .text {
+            font-size: 1rem;
+            line-height: 1.5;
         }
-
-        /* UI elements with softer styling */
-        .stButton>button {
-            background-color: #7ec8e3 !important;
-            color: #05445e !important;
-            border-radius: 6px;
-            border: none;
-            padding: 0.3rem 1rem;
+        
+        /* Speed indicators */
+        .speed-normal {
+            background: var(--light-gray);
+            color: var(--text);
+        }
+        
+        .speed-fast {
+            background: rgba(239, 71, 111, 0.1);
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .speed-slow {
+            background: rgba(255, 209, 102, 0.1);
+            color: #d68a00;
+            font-style: italic;
+        }
+        
+        /* Emotion badges */
+        .emotion-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: 500;
         }
-        
-        .stButton>button:hover {
-            background-color: #6db5d9 !important;
-        }
 
-        .stFileUploader>div {
-            background-color: #fff !important;
-            border: 1px dashed #7ec8e3;
-            border-radius: 6px;
-        }
-
-        .stSpinner>div {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            border-radius: 6px;
-        }
-        
-        .stSuccess {
-            background-color: #d4edda !important;
-            color: #155724 !important;
-            border-radius: 6px;
-        }
-        
-        /* Tab styling */
+        /* Tabs styling */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
-            border-bottom: 1px solid #e6eef7;
-            padding-bottom: 5px;
+            gap: 1rem;
+            background-color: transparent;
         }
         
         .stTabs [data-baseweb="tab"] {
-            background-color: #f8fafc;
-            border-radius: 6px 6px 0 0;
-            padding: 8px 16px;
-            color: #5c7080;
-            border: 1px solid #e6eef7;
-            border-bottom: none;
+            height: 3rem;
+            white-space: pre-wrap;
+            background-color: transparent;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            color: var(--text-light);
+            border: none;
+            font-weight: 500;
+            padding: 0 0.5rem;
         }
         
         .stTabs [aria-selected="true"] {
-            background-color: #ffffff;
-            color: #3a7ca5 !important;
-            border-bottom: 2px solid #3a7ca5;
+            background-color: transparent;
+            color: var(--primary) !important;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        /* Button styling */
+        .stButton > button {
+            background-color: var(--primary) !important;
+            color: white !important;
+            font-weight: 500;
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--border-radius);
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .stButton > button:hover {
+            background-color: var(--secondary) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .secondary-button button {
+            background-color: white !important;
+            color: var(--primary) !important;
+            border: 1px solid var(--primary) !important;
+        }
+        
+        .secondary-button button:hover {
+            background-color: var(--primary-light) !important;
         }
 
-        /* Chat styling */
-        .chat-container {
-            background-color: #f8fafc;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            border: 1px solid #e6eef7;
+        /* File uploader */
+        .stFileUploader > div > label {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            border-radius: var(--border-radius);
+            padding: 2.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .user-message {
-            background-color: #e6eef7;
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin: 8px 0;
-            align-self: flex-end;
-            max-width: 80%;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        .stFileUploader > div > label:hover {
+            background-color: rgba(67, 97, 238, 0.1);
         }
         
-        .ai-message {
-            background-color: #f0f7f4;
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin: 8px 0;
-            align-self: flex-start;
-            max-width: 80%;
-            border-left: 3px solid #7ec8e3;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Card styling */
-        .insight-card {
-            background-color: #f8fafc;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 12px 0;
-            border-left: 3px solid #3a7ca5;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        
-        .transcript-card {
-            background-color: #f8fafc;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 12px 0;
-            border-left: 3px solid #75b9be;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Progress meter */
+        /* Progress bars */
         .progress-container {
-            background-color: #e9ecef;
-            border-radius: 6px;
-            height: 20px;
+            background-color: var(--medium-gray);
+            border-radius: 4px;
+            height: 8px;
             width: 100%;
-            margin: 10px 0;
+            margin: 0.5rem 0;
             overflow: hidden;
         }
         
         .progress-bar {
             height: 100%;
-            border-radius: 6px;
-            text-align: center;
-            line-height: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            border-radius: 4px;
         }
         
-        /* Pulse animation */
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
-        
-        .ai-thinking {
-            animation: pulse 1.5s infinite;
-            background-color: #f0f7f4;
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: inline-block;
-            border-left: 3px solid #7ec8e3;
-        }
-
-        /* Chart styling */
+        /* Charts */
         [data-testid="stChart"] {
-            background-color: #ffffff !important;
-            border-radius: 8px;
-            padding: 10px;
-            border: 1px solid #e6eef7;
+            background-color: transparent !important;
+            border-radius: var(--border-radius);
+        }
+        
+        /* Toggles and expanders */
+        .toggle-container {
+            margin: 0.5rem 0;
+        }
+        
+        .toggle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            background-color: var(--light-gray);
+            transition: all 0.2s ease;
+        }
+        
+        .toggle-header:hover {
+            background-color: var(--medium-gray);
+        }
+        
+        .toggle-content {
+            padding: 0.75rem;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            border: 1px solid var(--medium-gray);
+            border-top: none;
+        }
+        
+        /* Chat components */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .user-message {
+            background-color: var(--primary-light);
+            color: var(--text);
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            border-bottom-right-radius: 0;
+            align-self: flex-end;
+            max-width: 80%;
+        }
+        
+        .ai-message {
+            background-color: white;
+            color: var(--text);
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            border-bottom-left-radius: 0;
+            align-self: flex-start;
+            max-width: 80%;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Insights component */
+        .insight-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+            box-shadow: var(--shadow);
+        }
+        
+        .insight-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text) !important;
+        }
+        
+        /* Mobile improvements */
+        @media (max-width: 768px) {
+            .main .block-container {
+                padding: 1rem !important;
+            }
+            
+            .transcript-segment {
+                padding: 0.75rem;
+            }
+            
+            .card, .compact-card, .metric-card {
+                padding: 0.75rem;
+            }
         }
         </style>
         """
     
-    @staticmethod
-    def add_custom_element(html_content: str):
+    def add_metric_card(self, title: str, value: str, subtitle: Optional[str] = None):
         """
-        Add a custom HTML element to the UI.
+        Add a metric card to the UI.
         
         Args:
-            html_content: HTML content to render
+            title: Card title
+            value: Main value to display
+            subtitle: Optional subtitle or context
         """
-        st.markdown(html_content, unsafe_allow_html=True)
+        subtitle_html = f'<div class="subtitle">{subtitle}</div>' if subtitle else ''
+        st.markdown(f"""
+        <div class="metric-card">
+            <h4>{title}</h4>
+            <div class="value">{value}</div>
+            {subtitle_html}
+        </div>
+        """, unsafe_allow_html=True)
     
-    @staticmethod
-    def add_spacer(height: int = 1):
+    def render_transcript_segment(
+        self, 
+        text: str, 
+        start_time: str, 
+        end_time: str, 
+        emotion: str, 
+        wps: float,
+        segment_id: str
+    ):
         """
-        Add vertical space to the UI.
+        Render a transcript segment with emotion and speed indicators.
         
         Args:
-            height: Height of the spacer in ems
+            text: Transcript text
+            start_time: Start timestamp
+            end_time: End timestamp
+            emotion: Detected emotion
+            wps: Words per second
+            segment_id: Unique ID for the segment
         """
-        st.markdown(f"<div style='margin-top: {height}em;'></div>", unsafe_allow_html=True)
+        # Determine speed class
+        speed_class = "speed-normal"
+        speed_text = f"{wps} WPS"
+        if wps > 3.0:
+            speed_class = "speed-fast"
+            speed_text = f"{wps} WPS (too fast)"
+        elif wps < 1.5:
+            speed_class = "speed-slow"
+            speed_text = f"{wps} WPS (too slow)"
+        
+        # Render the segment
+        st.markdown(f"""
+        <div class="transcript-segment" id="segment-{segment_id}">
+            <div class="timestamp">{start_time} - {end_time}</div>
+            <div class="metrics">
+                <span class="emotion-badge">{emotion.capitalize()}</span>
+                <span class="badge {speed_class}">{speed_text}</span>
+            </div>
+            <div class="text">{text}</div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    @staticmethod
-    def add_fancy_header(text: str, icon: Optional[str] = None, level: int = 2):
+    def create_expandable_section(self, title: str, content_function, expanded: bool = False):
         """
-        Add a fancy styled header to the UI.
+        Create an expandable section with a callback function for content.
         
         Args:
-            text: Header text
-            icon: Optional emoji icon
-            level: Header level (1-6)
+            title: Section title
+            content_function: Function that generates section content
+            expanded: Whether section is expanded by default
         """
-        icon_html = f"{icon} " if icon else ""
-        st.markdown(
-            f"<h{level} style='color:#2c6e8e; background-color:#f0f7f4; "
-            f"padding:10px; border-radius:6px; border-left:3px solid #3a7ca5;'>"
-            f"{icon_html}{text}</h{level}>", 
-            unsafe_allow_html=True
-        )
+        with st.expander(title, expanded=expanded):
+            content_function()
+    
+    def create_toggle_section(self, title: str, content: str, default_open: bool = False):
+        """
+        Create a pure HTML toggle section using JavaScript.
+        
+        Args:
+            title: Section title
+            content: HTML content
+            default_open: Whether section is open by default
+        """
+        section_id = "section_" + str(hash(title))
+        display = "block" if default_open else "none"
+        icon = "▼" if default_open else "▶"
+        
+        st.markdown(f"""
+        <div class="toggle-container">
+            <div class="toggle-header" onclick="toggleSection('{section_id}', this)">
+                <span>{title}</span>
+                <span id="icon_{section_id}">{icon}</span>
+            </div>
+            <div id="{section_id}" class="toggle-content" style="display: {display};">
+                {content}
+            </div>
+        </div>
+        <script>
+        function toggleSection(id, element) {{
+            var content = document.getElementById(id);
+            var icon = document.getElementById('icon_' + id);
+            if (content.style.display === 'none') {{
+                content.style.display = 'block';
+                icon.textContent = '▼';
+            }} else {{
+                content.style.display = 'none';
+                icon.textContent = '▶';
+            }}
+        }}
+        </script>
+        """, unsafe_allow_html=True)
 
-
-# Example usage if run directly
-if __name__ == "__main__":
-    # This would be used for local testing
-    
-    # Initialize style manager
-    style_manager = StyleManager()
-    
-    # Configure page
-    StyleManager.configure_page()
-    
-    # Apply custom styling
-    style_manager.apply_custom_styling()
-    
-    # Test UI elements
-    st.title("Speechably Style Test")
-    
-    style_manager.add_fancy_header("Speech Analysis Results", "🎙️", 2)
-    style_manager.add_spacer(1)
-    
-    st.write("This is a test of the new calming style for Speechably.")
-    
-    # Test tabs
-    tab1, tab2, tab3 = st.tabs(["📊 Analysis", "🧠 Insights", "💬 Coach"])
-    
-    with tab1:
-        st.write("This is the analysis tab")
-        st.metric("Speaking Rate", "2.4 WPS", "Good")
-    
-    with tab2:
-        style_manager.add_custom_element("""
-        <div class="insight-card">
-            <h4>Key Insight</h4>
-            <p>Your speech shows good emotional variation and clear articulation.</p>
-        </div>
-        """)
-    
-    with tab3:
-        st.write("Chat with your coach:")
-        style_manager.add_custom_element("""
-        <div class="ai-message">
-            How can I help you improve your speech today?
-        </div>
-        """)
-        style_manager.add_custom_element("""
-        <div class="user-message">
-            How can I reduce filler words?
-        </div>
-        """)
-        style_manager.add_custom_element("""
-        <div class="ai-thinking">
-            Thinking...
-        </div>
-        """)
+# Add helper for emotion colors
+def get_emotion_color(emotion: str) -> str:
+    """Get CSS color for an emotion."""
+    emotion_colors = {
+        "angry": "var(--danger)",
+        "calm": "var(--primary)",
+        "sad": "#6c757d",
+        "surprised": "var(--warning)",
+        "happy": "var(--success)",
+        "neutral": "var(--text-light)"
+    }
+    return emotion_colors.get(emotion.lower(), "var(--primary)")
