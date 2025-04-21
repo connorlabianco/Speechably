@@ -6,7 +6,7 @@ from pathlib import Path
 class SpeechAnalyzer:
     def __init__(self):
         # Load model + feature extractor
-        self.model_name = "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition"
+        self.model_name = "r-f/wav2vec-english-speech-emotion-recognition"
         self.feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(self.model_name)
         self.model = AutoModelForAudioClassification.from_pretrained(self.model_name)
 

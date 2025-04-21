@@ -164,7 +164,8 @@ class StyleManager:
         /* Speed indicators */
         .speed-normal {
             background: var(--light-gray);
-            color: var(--text);
+            color: var(--text) !important;
+            font-weight: 500;
         }
         
         .speed-fast {
