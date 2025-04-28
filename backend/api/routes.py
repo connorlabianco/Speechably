@@ -4,6 +4,8 @@ import uuid
 import tempfile
 from werkzeug.utils import secure_filename
 import json
+import sys
+from dotenv import load_dotenv
 
 from services.audio_service import AudioSegmenter, AudioSegmenterConfig
 from services.speech_analysis import SpeechAnalyzer
@@ -15,10 +17,23 @@ from utils.visualization import VisualizationHelper
 # Create blueprint
 api_bp = Blueprint('api', __name__)
 
+# Get Gemini API key from environment
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    print("WARNING: GEMINI_API_KEY not found in environment variables", file=sys.stderr)
+    print("Environment variables:", {k: v for k, v in os.environ.items() if 'API' in k or 'KEY' in k}, file=sys.stderr)
+    # Try to load from .env file directly as a fallback
+    load_dotenv()
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    if GEMINI_API_KEY:
+        print("Successfully loaded GEMINI_API_KEY from .env file", file=sys.stderr)
+    else:
+        print("Failed to load GEMINI_API_KEY from both environment and .env file", file=sys.stderr)
+
 # Initialize services
 speech_analyzer = SpeechAnalyzer()
 transcription_service = TranscriptionService()
-gemini_service = GeminiService()
+gemini_service = GeminiService(api_key=GEMINI_API_KEY)  # Pass API key explicitly
 visualization_helper = VisualizationHelper()
 
 # Configure audio segmenter - use system FFmpeg path or default
@@ -100,6 +115,9 @@ def upload_video():
             # Generate LLM insights
             gemini_analysis = gemini_service.analyze_speech(emotion_segments, transcription_data)
             
+            # Log the analysis result (for debugging)
+            print(f"Gemini analysis summary: {gemini_analysis.get('summary', 'Not available')[:100]}...", file=sys.stderr)
+            
             # Save all analysis results to a file
             results_path = data_processor.save_analysis_results(
                 output_dir, 
@@ -112,6 +130,7 @@ def upload_video():
             emotion_df = visualization_helper.prepare_emotion_timeline_data(emotion_segments)
             emotion_metrics = visualization_helper.calculate_emotion_metrics(emotion_df)
             wps_data = None
+            speech_clarity = None
             
             if transcription_data:
                 wps_data = visualization_helper.prepare_wps_data(transcription_data)
@@ -133,6 +152,8 @@ def upload_video():
             return jsonify(response_data), 200
             
         except Exception as e:
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             return jsonify({'error': str(e)}), 500
         
         finally:
@@ -160,9 +181,18 @@ def chat_with_coach():
         return jsonify({'response': response}), 200
     
     except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/healthcheck', methods=['GET'])
 def healthcheck():
     """Simple health check endpoint"""
-    return jsonify({'status': 'ok'}), 200
+    # Also check Gemini service status
+    gemini_status = "available" if gemini_service.model is not None else "unavailable"
+    return jsonify({
+        'status': 'ok',
+        'services': {
+            'gemini': gemini_status
+        }
+    }), 200

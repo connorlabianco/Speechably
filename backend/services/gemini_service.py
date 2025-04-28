@@ -2,6 +2,7 @@ import google.generativeai as genai
 import json
 import re
 import os
+import sys
 from typing import Dict, List, Tuple, Any, Optional, Union
 
 class GeminiService:
@@ -18,6 +19,11 @@ class GeminiService:
             api_key: The Gemini API key. If None, attempts to load from environment.
         """
         self.model = self.init_gemini(api_key)
+        # Log init status
+        if self.model is None:
+            print("WARNING: Gemini model initialization failed. Analysis will be limited.", file=sys.stderr)
+        else:
+            print("Gemini model initialized successfully.")
     
     def init_gemini(self, api_key: Optional[str] = None) -> Any:
         """
@@ -33,18 +39,46 @@ class GeminiService:
             # Get API key from parameter or environment variable
             API_KEY = api_key or os.environ.get("GEMINI_API_KEY")
             if not API_KEY:
-                print("GEMINI_API_KEY not found in environment variables or parameters")
+                print("GEMINI_API_KEY not found in environment variables or parameters", file=sys.stderr)
+                print("Environment variables:", {k: v for k, v in os.environ.items() if 'API' in k}, file=sys.stderr)
                 return None
                 
+            # Configure the API client
             genai.configure(api_key=API_KEY)
             
             # Set up the model
-            model = genai.GenerativeModel('gemini-pro')
+            generation_config = {
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "top_k": 40,
+                "max_output_tokens": 1024,
+            }
             
+            safety_settings = [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            ]
+            
+            # Try to create the model
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-pro",
+                generation_config=generation_config,
+                safety_settings=safety_settings
+            )
+            
+            # Test the model with a simple call to verify it works
+            test_response = model.generate_content("Hello")
+            if not test_response:
+                raise Exception("Model did not return a response for test call")
+                
             return model
-            
         except Exception as e:
-            print(f"Error initializing Gemini: {e}")
+            print(f"Error initializing Gemini: {str(e)}", file=sys.stderr)
+            # Print the full exception traceback for debugging
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             return None
     
     def generate_speech_analysis_prompt(self, transcription_data: List[Dict[str, Any]]) -> str:
@@ -100,8 +134,7 @@ class GeminiService:
                 emotion_transitions += 1
         
         # Build the prompt
-        prompt = f"""
-You are a professional speech coach analyzing speech transcript data. The following is a timeline of speech segments with transcriptions, speaking rate (words per second), and detected emotions:
+        prompt = f"""You are a professional speech coach analyzing speech transcript data. The following is a timeline of speech segments with transcriptions, speaking rate (words per second), and detected emotions:
 
 {chr(10).join(block for block in timeline_blocks)}
 
@@ -132,8 +165,7 @@ Format your response in JSON with the following structure:
   "improvement_areas": ["Area 1", "Area 2", "Area 3"],
   "strengths": ["Strength 1", "Strength 2"],
   "coaching_tips": ["Tip 1", "Tip 2", "Tip 3"]
-}}
-"""
+}}"""
         
         return prompt
     
@@ -151,26 +183,76 @@ Format your response in JSON with the following structure:
         emotion_timeline = "\n".join([f"{time_range}: {emotion}" for time_range, emotion in emotion_segments])
         
         prompt = f"""
-        You are a professional speech coach helping someone improve their communication skills.
-        Analyze the following emotion timeline from a speech:
-        
-        {emotion_timeline}
-        
-        Based on this emotional pattern:
-        1. Provide a brief summary of the speaker's emotional journey
-        2. Identify 3 specific areas for improvement
-        3. Point out 2-3 emotional strengths
-        4. Give 3-5 practical coaching tips to help the speaker improve
-        
-        Format your response in JSON with the following structure:
-        {{
-          "summary": "Your overall analysis and key observations",
-          "improvement_areas": ["Area 1", "Area 2", "Area 3"],
-          "strengths": ["Strength 1", "Strength 2"],
-          "coaching_tips": ["Tip 1", "Tip 2", "Tip 3"]
-        }}
-        """
+You are a professional speech coach helping someone improve their communication skills.
+Analyze the following emotion timeline from a speech:
+
+{emotion_timeline}
+
+Based on this emotional pattern:
+1. Provide a brief summary of the speaker's emotional journey
+2. Identify 3 specific areas for improvement
+3. Point out 2-3 emotional strengths
+4. Give 3-5 practical coaching tips to help the speaker improve
+
+Format your response in JSON with the following structure:
+{{
+  "summary": "Your overall analysis and key observations",
+  "improvement_areas": ["Area 1", "Area 2", "Area 3"],
+  "strengths": ["Strength 1", "Strength 2"],
+  "coaching_tips": ["Tip 1", "Tip 2", "Tip 3"]
+}}
+"""
         return prompt
+    
+    def generate_fallback_analysis(self, emotion_segments: List[Tuple[str, str]]) -> Dict[str, Any]:
+        """
+        Generate a fallback analysis when Gemini is not available.
+        This provides basic insights using local logic rather than the LLM.
+        
+        Args:
+            emotion_segments: List of (time_range, emotion) tuples
+            
+        Returns:
+            Dictionary containing basic analysis results
+        """
+        # Count emotions
+        emotion_counts = {}
+        for _, emotion in emotion_segments:
+            emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
+        
+        # Find dominant emotion
+        dominant_emotion = max(emotion_counts.items(), key=lambda x: x[1])[0] if emotion_counts else "unknown"
+        
+        # Count transitions
+        transitions = 0
+        prev_emotion = None
+        for _, emotion in emotion_segments:
+            if prev_emotion and prev_emotion != emotion:
+                transitions += 1
+            prev_emotion = emotion
+        
+        # Basic analysis
+        analysis = {
+            "summary": "Based on the emotion patterns detected in your speech, here are some basic observations and suggestions for improvement.",
+            "improvement_areas": [
+                "Work on maintaining consistent emotional tone when appropriate",
+                "Practice transitioning smoothly between different emotional states",
+                "Focus on matching your emotional tone to your content"
+            ],
+            "strengths": [
+                f"You showed a predominant {dominant_emotion} tone throughout your speech",
+                f"You had {transitions} emotional transitions, showing some emotional range"
+            ],
+            "coaching_tips": [
+                "Record yourself speaking regularly and review your emotional patterns",
+                "Practice speaking with deliberate emotional tones to expand your range",
+                "Ask for feedback from others about how your emotions come across",
+                "Try mirroring techniques to build emotional awareness in your speech",
+                "Join a speaking club like Toastmasters to get regular speaking practice"
+            ]
+        }
+        
+        return analysis
     
     def analyze_speech(
         self, 
@@ -188,12 +270,8 @@ Format your response in JSON with the following structure:
             Dictionary containing analysis results
         """
         if self.model is None:
-            return {
-                "summary": "Gemini analysis not available. Please check your API key configuration.",
-                "improvement_areas": [],
-                "strengths": [],
-                "coaching_tips": []
-            }
+            print("Using fallback analysis because Gemini model is not available", file=sys.stderr)
+            return self.generate_fallback_analysis(emotion_segments)
         
         # Generate appropriate prompt based on available data
         if transcription_data:
@@ -203,9 +281,7 @@ Format your response in JSON with the following structure:
         
         try:
             # Get response from Gemini
-            response = self.model.generate_content(
-                contents=prompt
-            )
+            response = self.model.generate_content(prompt)
             response_text = response.text
             
             # Extract JSON data from response
@@ -233,22 +309,16 @@ Format your response in JSON with the following structure:
                     analysis_data = json.loads(json_str)
                 except json.JSONDecodeError:
                     # If JSON parsing still fails, create a structured response manually
-                    analysis_data = {
-                        "summary": response_text,
-                        "improvement_areas": ["Please see summary for details"],
-                        "strengths": ["Please see summary for details"],
-                        "coaching_tips": ["Please see summary for details"]
-                    }
+                    print(f"Failed to parse JSON from Gemini response. Raw response: {response_text[:500]}...", file=sys.stderr)
+                    return self.generate_fallback_analysis(emotion_segments)
                 
             return analysis_data
             
         except Exception as e:
-            return {
-                "summary": f"Error during Gemini analysis: {str(e)}",
-                "improvement_areas": ["Unable to analyze with Gemini at this time"],
-                "strengths": [],
-                "coaching_tips": ["Try again later or check your API configuration"]
-            }
+            print(f"Error during Gemini analysis: {str(e)}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            return self.generate_fallback_analysis(emotion_segments)
             
     def generate_chat_response(self, user_input: str, emotion_context: str) -> str:
         """
@@ -261,27 +331,27 @@ Format your response in JSON with the following structure:
         Returns:
             The AI coach's response text
         """
-        if self.model is None:
-            return "I'm not available right now. Please check the Gemini API configuration."
+        if not self.model:
+            return "I'm currently limited to basic responses as my AI analysis capabilities are offline. Here are some general tips: speak at a moderate pace (2-3 words per second), practice with recordings to improve tone, and join speaking clubs for regular feedback. For more personalized advice, please check your API settings or try again later."
             
         # Create prompt for Gemini
         prompt = f"""
-        You are a supportive and knowledgeable speech coach helping someone improve their communication.
-        
-        The user's speech had these emotional patterns:
-        {emotion_context}
-        
-        The user is asking: "{user_input}"
-        
-        Provide helpful, specific coaching advice related to their question. Be encouraging but honest.
-        Keep your response concise (3-5 sentences) unless detailed instructions are needed.
-        """
+You are a supportive and knowledgeable speech coach helping someone improve their communication.
+
+The user's speech had these emotional patterns:
+{emotion_context}
+
+The user is asking: "{user_input}"
+
+Provide helpful, specific coaching advice related to their question. Be encouraging but honest.
+Keep your response concise (3-5 sentences) unless detailed instructions are needed.
+"""
         
         try:
             # Get response from Gemini
-            response = self.model.generate_content(
-                contents=prompt
-            )
+            response = self.model.generate_content(prompt)
             return response.text.strip()
         except Exception as e:
-            return f"I'm having trouble generating a response right now. Error: {str(e)}"
+            # Provide a fallback response if Gemini fails
+            print(f"Error generating chat response: {str(e)}", file=sys.stderr)
+            return "I'm having trouble generating a personalized response right now. Here's some general advice: focus on maintaining a consistent pace, practice in front of a mirror to work on your delivery, and record yourself to identify specific areas for improvement. Would you like advice on a particular aspect of public speaking?"
