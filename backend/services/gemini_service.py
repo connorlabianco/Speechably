@@ -136,7 +136,7 @@ Based on this data, provide constructive feedback on:
    - Suggest where emotional variety could improve engagement
 
 3. Clarity and Enunciation:
-   - Identify any unclear or nonsensical phrases that suggest poor enunciation
+   - Identify any unclear or nonsensical phrases that suggest poor enunciation. (If words are spoken too fast, or too quietly, or pronounced incorrectly, they may be unclear on the transcription. Please assume that the user's speech is written correctly, and that the transcription looking incorrect is due to the user speaking too fast, or too quietly, or pronounced incorrectly. This is mostly fixed by enunciating more clearly and slowing down.)
    - Suggest specific techniques to improve clarity
 
 4. Overall Presentation:

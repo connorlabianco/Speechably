@@ -79,8 +79,8 @@ class SpeechAnalyzer:
         if not output_path.exists():
             raise FileNotFoundError(f"Folder does not exist: {output_folder}")
 
-        # Collect audio files
-        audio_files = [f for f in output_path.glob("*.wav") if f.is_file()]
+        # Collect audio files (only segment files, not full_audio)
+        audio_files = [f for f in output_path.glob("segment_*.wav") if f.is_file()]
         
         if not audio_files:
             print("No audio files found in the output folder.")
