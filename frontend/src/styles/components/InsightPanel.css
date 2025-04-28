@@ -1,0 +1,139 @@
+.insight-panel {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .summary-card {
+    margin-bottom: 2rem;
+  }
+  
+  .summary-text {
+    line-height: 1.8;
+  }
+  
+  .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .strength-list,
+  .improvement-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .strength-item,
+  .improvement-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  
+  .strength-icon,
+  .improvement-icon {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+  }
+  
+  .strength-text,
+  .improvement-text {
+    flex: 1;
+  }
+  
+  .metrics-section {
+    margin-bottom: 2rem;
+  }
+  
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background-color: var(--light-gray);
+    border-radius: var(--border-radius);
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+  }
+  
+  .metric-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+  }
+  
+  .metric-indicator {
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+  }
+  
+  .metric-indicator.good {
+    color: var(--success-color);
+  }
+  
+  .metric-indicator.warning {
+    color: var(--danger-color);
+  }
+  
+  .metric-indicator.caution {
+    color: var(--warning-color);
+  }
+  
+  .metric-indicator.neutral {
+    color: var(--text-light);
+  }
+  
+  .coaching-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .coaching-tip {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--primary-light);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+  }
+  
+  .tip-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    font-weight: 500;
+  }
+  
+  .tip-text {
+    flex: 1;
+    margin: 0;
+  }
+  
+  .insights-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    background-color: var(--light-gray);
+    border-radius: var(--border-radius);
+    color: var(--text-light);
+    margin: 2rem auto;
+    max-width: 600px;
+  }

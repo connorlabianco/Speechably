@@ -1,4 +1,4 @@
-# Python virtual environment
+# Python virtual environments (anywhere)
 .venv/
 venv/
 ENV/
@@ -22,6 +22,7 @@ build/
 # Environment variables
 .env
 .env.local
+Speechably/backend/.env   # Exclude backend .env specifically
 
 # Logs
 *.log 
@@ -30,3 +31,16 @@ build/
 output_segments/
 
 your_video.mp4
+
+# Node.js packages (ignore all node_modules folders recursively)
+node_modules/
+Speechably/frontend/node_modules/
+
+# Python packages in backend
+/backend/venv/
+/backend/.venv/
+/backend/ENV/
+/backend/__pycache__/
+/backend/dist/
+/backend/build/
+/backend/*.egg-info/

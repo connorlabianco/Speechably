@@ -16,79 +16,118 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 
 - 🎥 **Video Upload** – Users upload a short video of themselves speaking.
 - 🔊 **Speech Emotion Recognition** – Detects tone, mood, and speaking style using pre-trained models.
-- 💃 **Body Language Analysis** – Uses pose estimation to assess posture, gestures, and confidence cues.
+- 📊 **Speaking Rate Analysis** – Measures words per second and provides visual feedback.
 - 🧠 **AI-Powered Feedback** – LLM-generated insights and tips to improve delivery and presence.
-- 🌐 **Streamlit Interface** – Clean, minimal UI for easy interaction and visualization.
-
----
-
-## 🗂️ Project Structure
-```bash
-speechably/
-├── app/                     # Frontend logic (Streamlit)
-│   ├── main.py              # Entry point for your web app
-│   └── components/          # Reusable UI components if needed
-│
-├── backend/                 # Core processing logic
-│   ├── video_processor.py   # Extract frames, audio
-│   ├── emotion_model.py     # Run speech emotion recognition
-│   ├── pose_estimator.py    # Use MediaPipe or OpenPose
-│   ├── feedback_engine.py   # Feedback generation via LLM or rule-based
-│   └── utils.py             # Shared utilities (e.g., file handling)
-│
-├── models/                  # Store downloaded/pretrained models
-│   ├── emotion/             
-│   └── body_language/
-│
-├── data/                    # Sample videos and test inputs
-│   ├── test_video.mp4       
-│   └── extracted_audio.wav
-│
-├── output/                  # Processed outputs and logs
-│   ├── feedback.json        
-│   ├── plots/               # Emotion timeline plots
-│   └── debug_logs.txt
-│
-├── requirements.txt         # Python deps
-├── .env                     # API keys (Gemini)
-└── README.md                # Project overview
-```
-
+- 💬 **AI Speech Coach** – Chat with an AI coach for personalized advice based on your speech patterns.
+- 📈 **Interactive Visualizations** – View detailed timelines of your emotion patterns and speaking rate.
 
 ---
 
 ## ⚙️ Tech Stack
 
-- **Python**
-- **Streamlit** – Frontend
-- **MoviePy** – Video + audio extraction
-- **Kaggle / Hugging Face** – Pre-trained Speech Emotion Models
-- **MediaPipe** – Pose & gesture analysis
-- **Hugging Face** – LLM Integration
-- **Plotly** – Optional feedback visualization
+### Backend
+- **Flask** – API backend
+- **Python** – Core logic
+- **Hugging Face Transformers** – Speech emotion recognition
+- **Whisper** – Speech-to-text conversion
+- **Google Gemini** – AI feedback generation
+- **FFmpeg** – Audio extraction and processing
+
+### Frontend
+- **React** – User interface
+- **React Router** – Client-side routing
+- **Recharts** – Data visualization
+- **CSS Modules** – Component styling
 
 ---
 
 ## 🚀 Getting Started
 
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- FFmpeg installed on your system
+
+### Installation
+
 1. **Clone the repo**
    ```bash
    git clone https://github.com/your-username/speechably.git
    cd speechably
+   ```
 
-2. **Install Dependencies**
+2. **Set up the backend**
    ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. **Create a .env file in the root directory and add your API key**
-   ```bash
-   GEMINI_API_KEY=your_key_here
+3. **Create a .env file in the backend directory with your API keys**
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
+   FFMPEG_PATH=/path/to/ffmpeg  # Only if FFmpeg is not in your PATH
    ```
 
-4. **Run the program**
+4. **Set up the frontend**
    ```bash
-   cd app
-   streamlit run main.py
+   cd ../frontend
+   npm install
    ```
 
+### Running the Application
+
+1. **Start the Flask backend**
+   ```bash
+   cd backend
+   python app.py
+   ```
+
+2. **Start the React frontend**
+   ```bash
+   cd frontend
+   npm start
+   ```
+
+3. **Open your browser and go to http://localhost:3000**
+
+---
+
+## 📁 Project Structure
+
+```
+speechably/
+├── backend/                   # Flask backend
+│   ├── app.py                 # Main Flask application
+│   ├── api/                   # API routes
+│   ├── services/              # Core services
+│   ├── utils/                 # Utilities
+│   └── requirements.txt       # Backend dependencies
+│
+├── frontend/                  # React frontend
+│   ├── public/                # Static files
+│   ├── src/                   # Source code
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Application pages
+│   │   ├── services/          # API client
+│   │   └── styles/            # CSS files
+│   └── package.json           # Frontend dependencies
+│
+├── .env                       # Environment variables
+├── README.md                  # Project documentation
+└── LICENSE                    # MIT License
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Special thanks to the open-source community for providing the tools and libraries that make this project possible.
+- Inspired by the need for accessible speech coaching tools for everyone.

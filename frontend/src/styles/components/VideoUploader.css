@@ -1,0 +1,96 @@
+.video-uploader {
+    margin: 2rem auto;
+    max-width: 800px;
+  }
+  
+  .upload-area {
+    border: 2px dashed var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background-color: white;
+    position: relative;
+  }
+  
+  .upload-area:hover {
+    border-color: var(--secondary-color);
+    background-color: var(--primary-light);
+  }
+  
+  .upload-area.dragging {
+    border-color: var(--secondary-color);
+    background-color: var(--primary-light);
+    transform: scale(1.01);
+  }
+  
+  .upload-area.has-file {
+    border-style: solid;
+    background-color: white;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+  }
+  
+  .upload-text {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+  }
+  
+  .upload-hint {
+    font-size: 0.9rem;
+    color: var(--text-light);
+  }
+  
+  .file-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .file-name {
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .file-size {
+    color: var(--text-light);
+    font-size: 0.9rem;
+  }
+  
+  .upload-button {
+    display: block;
+    margin: 1.5rem auto 0;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  
+  .upload-button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+  
+ 

@@ -1,9 +1,0 @@
-streamlit
-huggingface_hub
-transformers
-torch
-soundfile
-torchaudio
-google-generativeai
-dotenv
-openai-whisper
