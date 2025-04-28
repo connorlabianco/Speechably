@@ -52,7 +52,7 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/your-username/speechably.git
+   git clone https://github.com/connorlabianco/speechably.git
    cd speechably
    ```
 
