@@ -166,14 +166,20 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
         <Card className="coaching-tips-card">
           <h3>Coaching Tips</h3>
           <div className="coaching-tips">
-            {geminiAnalysis.coaching_tips.map((tip, index) => (
-              <div key={index} className="coaching-tip">
-                <span className="tip-number">{index + 1}</span>
-                <p className="tip-text">
-                  {typeof tip === 'object' ? tip.tip || JSON.stringify(tip) : tip}
-                </p>
-              </div>
-            ))}
+            {Array.isArray(geminiAnalysis.coaching_tips) && geminiAnalysis.coaching_tips.length > 0 ? (
+              geminiAnalysis.coaching_tips.map((tip, index) => (
+                <div key={index} className="coaching-tip">
+                  <span className="tip-number">{index + 1}</span>
+                  <p className="tip-text">
+                    {tip && typeof tip === 'object'
+                      ? tip.tip || JSON.stringify(tip)
+                      : tip}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="no-tips">No coaching tips available.</p>
+            )}
           </div>
         </Card>
       )}
