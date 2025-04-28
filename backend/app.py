@@ -15,7 +15,7 @@ def create_app():
     # Configure app
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
     app.config['TEMP_FOLDER'] = os.path.join(BASE_DIR, 'temp')
-    app.config['MAX_CONTENT_LENGTH'] = 3000 * 1024 * 1024  # Max 300MB uploads
+    app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # Max 500MB uploads
     
     # Ensure upload and temp directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -39,7 +39,7 @@ def create_app():
     
     @app.errorhandler(413)
     def request_entity_too_large(error):
-        return jsonify({'error': 'File is too large. Max size is 200MB.'}), 413
+        return jsonify({'error': 'File is too large. Max size is 500MB.'}), 413
     
     return app
 
