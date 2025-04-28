@@ -14,7 +14,7 @@ function Header() {
         <nav className="main-nav">
           <ul>
             <li><Link to="/">Home</Link></li>
-            <li><a href="https://github.com/your-username/speechably" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="https://github.com/connorlabianco/Speechably" target="_blank" rel="noopener noreferrer">GitHub</a></li>
           </ul>
         </nav>
       </div>

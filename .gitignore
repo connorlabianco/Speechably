@@ -28,9 +28,8 @@ Speechably/backend/.env   # Exclude backend .env specifically
 *.log 
 
 # Output
-output_segments/
-
-your_video.mp4
+uploads/
+temp/
 
 # Node.js packages (ignore all node_modules folders recursively)
 node_modules/

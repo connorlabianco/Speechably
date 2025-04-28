@@ -20,8 +20,8 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['TEMP_FOLDER'], exist_ok=True)
     
-    # Enable CORS
-    CORS(app)
+    # Enable CORS with specific configuration
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
     
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api')
