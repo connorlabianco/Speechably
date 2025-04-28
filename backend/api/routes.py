@@ -138,8 +138,8 @@ def upload_video():
         finally:
             # Clean up the uploaded file if needed
             # Uncomment to delete after processing:
-            # if os.path.exists(upload_path):
-            #     os.remove(upload_path)
+            if os.path.exists(upload_path):
+                os.remove(upload_path)
             pass
 
 @api_bp.route('/chat', methods=['POST'])

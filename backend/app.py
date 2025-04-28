@@ -4,17 +4,18 @@ import os
 from dotenv import load_dotenv
 from api.routes import api_bp
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from the backend directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
     
     # Configure app
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
-    app.config['TEMP_FOLDER'] = os.path.join(os.getcwd(), 'temp')
-    app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # Max 200MB uploads
+    app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
+    app.config['TEMP_FOLDER'] = os.path.join(BASE_DIR, 'temp')
+    app.config['MAX_CONTENT_LENGTH'] = 3000 * 1024 * 1024  # Max 300MB uploads
     
     # Ensure upload and temp directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
