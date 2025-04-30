@@ -4,9 +4,16 @@ import '../styles/components/InsightPanel.css';
 
 function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
   // Ensure we have valid data
-  const hasGeminiAnalysis = geminiAnalysis && Object.keys(geminiAnalysis).length > 0;
+  const hasGeminiAnalysis = geminiAnalysis && 
+                          Object.keys(geminiAnalysis).length > 0 && 
+                          geminiAnalysis.summary !== "Gemini analysis not available. Please check your API key configuration.";
   const hasEmotionMetrics = emotionMetrics && Object.keys(emotionMetrics).length > 0;
   const hasSpeechClarity = speechClarity && Object.keys(speechClarity).length > 0;
+  
+  // Check for API configuration error
+  const hasApiError = geminiAnalysis && 
+                     geminiAnalysis.summary && 
+                     geminiAnalysis.summary.includes("API key configuration");
   
   if (!hasGeminiAnalysis && !hasEmotionMetrics) {
     return (
@@ -18,6 +25,27 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
   
   return (
     <div className="insight-panel">
+      {/* API Error Message */}
+      {hasApiError && (
+        <Card className="error-card">
+          <h3>AI Analysis Unavailable</h3>
+          <div className="error-message">
+            <p>The AI analysis service is currently unavailable. This could be due to:</p>
+            <ul>
+              <li>Missing or invalid Google Gemini API key</li>
+              <li>Network connectivity issues</li>
+              <li>Service disruption with the AI provider</li>
+            </ul>
+            <p>Basic metrics are still available below. To enable AI analysis:</p>
+            <ol>
+              <li>Check that you have a valid Google Gemini API key</li>
+              <li>Make sure the API key is correctly set in your .env file</li>
+              <li>Restart the server to apply any changes</li>
+            </ol>
+          </div>
+        </Card>
+      )}
+      
       {/* Summary Section */}
       {hasGeminiAnalysis && (
         <Card className="summary-card">
@@ -80,7 +108,7 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
               <div className="metric-item">
                 <span className="metric-label">Speaking Rate Variation</span>
                 <span className="metric-value">
-                  {speechClarity.wps_variation} WPS
+                  {speechClarity.wps_variation?.toFixed(2) || "0.00"} WPS
                   <span className={`metric-indicator ${
                     speechClarity.wps_variation < 0.5 ? 'caution' :
                     speechClarity.wps_variation > 2.0 ? 'warning' : 'good'
@@ -107,7 +135,7 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
               
               <div className="metric-item">
                 <span className="metric-label">Total Words</span>
-                <span className="metric-value">{speechClarity.total_words}</span>
+                <span className="metric-value">{speechClarity.total_words || 0}</span>
               </div>
             </div>
           </Card>
@@ -153,7 +181,7 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
               <div className="metric-item">
                 <span className="metric-label">Emotion Transitions</span>
                 <span className="metric-value">
-                  {emotionMetrics.transitions ? emotionMetrics.transitions.length : 0}
+                  {Array.isArray(emotionMetrics.transitions) ? emotionMetrics.transitions.length : 0}
                 </span>
               </div>
             </div>
@@ -162,24 +190,38 @@ function InsightPanel({ geminiAnalysis, emotionMetrics, speechClarity }) {
       </div>
       
       {/* Coaching Tips */}
-      {hasGeminiAnalysis && (
+      {hasGeminiAnalysis && geminiAnalysis.coaching_tips && geminiAnalysis.coaching_tips.length > 0 ? (
         <Card className="coaching-tips-card">
           <h3>Coaching Tips</h3>
           <div className="coaching-tips">
-            {Array.isArray(geminiAnalysis.coaching_tips) && geminiAnalysis.coaching_tips.length > 0 ? (
-              geminiAnalysis.coaching_tips.map((tip, index) => (
-                <div key={index} className="coaching-tip">
-                  <span className="tip-number">{index + 1}</span>
-                  <p className="tip-text">
-                    {tip && typeof tip === 'object'
-                      ? tip.tip || JSON.stringify(tip)
-                      : tip}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="no-tips">No coaching tips available.</p>
-            )}
+            {geminiAnalysis.coaching_tips.map((tip, index) => (
+              <div key={index} className="coaching-tip">
+                <span className="tip-number">{index + 1}</span>
+                <p className="tip-text">
+                  {tip && typeof tip === 'object'
+                    ? tip.tip || JSON.stringify(tip)
+                    : tip}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : !hasApiError && (
+        <Card className="coaching-tips-card">
+          <h3>Coaching Tips</h3>
+          <div className="coaching-tips">
+            <div className="coaching-tip">
+              <span className="tip-number">1</span>
+              <p className="tip-text">Practice maintaining a consistent speaking rate between 2-3 words per second for optimal clarity.</p>
+            </div>
+            <div className="coaching-tip">
+              <span className="tip-number">2</span>
+              <p className="tip-text">Record yourself regularly and review your emotional patterns to develop greater emotional range.</p>
+            </div>
+            <div className="coaching-tip">
+              <span className="tip-number">3</span>
+              <p className="tip-text">Join a speaking club or group to get regular feedback on your delivery and presentation skills.</p>
+            </div>
           </div>
         </Card>
       )}

@@ -42,7 +42,7 @@ def create_app():
     # Configure app
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
     app.config['TEMP_FOLDER'] = os.path.join(BASE_DIR, 'temp')
-    app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # Max 300MB uploads
+    app.config['MAX_CONTENT_LENGTH'] = 700 * 1024 * 1024  # Max 300MB uploads
     
     # Ensure upload and temp directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
