@@ -1,4 +1,4 @@
-# 🗣️ Speechably
+# Speechably
 
 **Creating confidence through user-driven feedback.**  
 Optimized to deliver professional speech advice — at no cost.  
@@ -6,24 +6,24 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 
 ---
 
-## 🔍 Overview
+## Overview
 
 **Speechably** is an AI-powered accessibility tool that analyzes videos of users giving speeches or speaking naturally. It evaluates both **speech emotion** and **body language**, then generates personalized feedback using a large language model (LLM). The goal: help users overcome social anxiety, improve delivery, and speak with confidence.
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
-- 🎥 **Video Upload** – Users upload a short video of themselves speaking.
-- 🔊 **Speech Emotion Recognition** – Detects tone, mood, and speaking style using pre-trained models.
-- 📊 **Speaking Rate Analysis** – Measures words per second and provides visual feedback.
-- 🧠 **AI-Powered Feedback** – LLM-generated insights and tips to improve delivery and presence.
-- 💬 **AI Speech Coach** – Chat with an AI coach for personalized advice based on your speech patterns.
-- 📈 **Interactive Visualizations** – View detailed timelines of your emotion patterns and speaking rate.
+-  **Video Upload** – Users upload a short video of themselves speaking.
+-  **Speech Emotion Recognition** – Detects tone, mood, and speaking style using pre-trained models.
+-  **Speaking Rate Analysis** – Measures words per second and provides visual feedback.
+-  **AI-Powered Feedback** – LLM-generated insights and tips to improve delivery and presence.
+-  **AI Speech Coach** – Chat with an AI coach for personalized advice based on your speech patterns.
+-  **Interactive Visualizations** – View detailed timelines of your emotion patterns and speaking rate.
 
 ---
 
-## ⚙️ Tech Stack
+##  Tech Stack
 
 ### Backend
 - **Flask** – API backend
@@ -41,7 +41,7 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.8+
@@ -94,7 +94,7 @@ Perfect for public speaking, everyday conversation, or confidence-building exerc
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 speechably/
@@ -121,13 +121,13 @@ speechably/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Special thanks to the open-source community for providing the tools and libraries that make this project possible.
 - Inspired by the need for accessible speech coaching tools for everyone.
